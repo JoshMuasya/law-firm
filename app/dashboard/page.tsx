@@ -56,73 +56,75 @@ const page = () => {
         {/* Cases */}
         <div className='px-3 md:px-10 py-5 md:py-10'>
           <Card>
-            <CardContent className='flex flex-row justify-around items-center align-middle py-5'>
-              {/* Active */}
-              <div className='px-3 flex flex-col justify-center items-center align-middle'>
-                {/* Title */}
-                <div>
-                  <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
-                    Active Cases
-                  </h1>
+            <Link href='/cases'>
+              <CardContent className='flex flex-row justify-around items-center align-middle py-5'>
+                {/* Active */}
+                <div className='px-3 flex flex-col justify-center items-center align-middle'>
+                  {/* Title */}
+                  <div>
+                    <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
+                      Active Cases
+                    </h1>
+                  </div>
+
+                  {/* Icon */}
+                  <div className='py-5'>
+                    <IoBriefcase className='text-xl md:text-2xl lg:text-3xl' />
+                  </div>
+
+                  {/* Number */}
+                  <div>
+                    <p className='font-semibold text-base md:text-lg lg:text-xl'>
+                      24
+                    </p>
+                  </div>
                 </div>
 
-                {/* Icon */}
-                <div className='py-5'>
-                  <IoBriefcase className='text-xl md:text-2xl lg:text-3xl' />
+                {/* Closed */}
+                <div className='px-3 flex flex-col justify-center items-center align-middle'>
+                  {/* Title */}
+                  <div>
+                    <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
+                      Closed Cases
+                    </h1>
+                  </div>
+
+                  {/* Icon */}
+                  <div className='py-5'>
+                    <IoMdBriefcase className='text-xl md:text-2xl lg:text-3xl' />
+                  </div>
+
+                  {/* Number */}
+                  <div>
+                    <p className='font-semibold text-base md:text-lg lg:text-xl'>
+                      10
+                    </p>
+                  </div>
                 </div>
 
-                {/* Number */}
-                <div>
-                  <p className='font-semibold text-base md:text-lg lg:text-xl'>
-                    24
-                  </p>
-                </div>
-              </div>
+                {/* Pending */}
+                <div className='px-3 flex flex-col justify-center items-center align-middle'>
+                  {/* Title */}
+                  <div>
+                    <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
+                      Pending Cases
+                    </h1>
+                  </div>
 
-              {/* Closed */}
-              <div className='px-3 flex flex-col justify-center items-center align-middle'>
-                {/* Title */}
-                <div>
-                  <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
-                    Closed Cases
-                  </h1>
-                </div>
+                  {/* Icon */}
+                  <div className='py-5'>
+                    <FaSuitcase className='text-xl md:text-2xl lg:text-3xl' />
+                  </div>
 
-                {/* Icon */}
-                <div className='py-5'>
-                  <IoMdBriefcase className='text-xl md:text-2xl lg:text-3xl' />
+                  {/* Number */}
+                  <div>
+                    <p className='font-semibold text-base md:text-lg lg:text-xl'>
+                      5
+                    </p>
+                  </div>
                 </div>
-
-                {/* Number */}
-                <div>
-                  <p className='font-semibold text-base md:text-lg lg:text-xl'>
-                    10
-                  </p>
-                </div>
-              </div>
-
-              {/* Pending */}
-              <div className='px-3 flex flex-col justify-center items-center align-middle'>
-                {/* Title */}
-                <div>
-                  <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
-                    Pending Cases
-                  </h1>
-                </div>
-
-                {/* Icon */}
-                <div className='py-5'>
-                  <FaSuitcase className='text-xl md:text-2xl lg:text-3xl' />
-                </div>
-
-                {/* Number */}
-                <div>
-                  <p className='font-semibold text-base md:text-lg lg:text-xl'>
-                    5
-                  </p>
-                </div>
-              </div>
-            </CardContent>
+              </CardContent>
+            </Link>
           </Card>
         </div>
 
