@@ -162,64 +162,66 @@ const page = () => {
         {/* Upcoming Events */}
         <div className='px-3 md:px-10 py-5 md:py-10'>
           <Card>
-            <CardHeader className='flex flex-col justify-center align-middle items-center'>
-              <h1 className='font-bold text-base md:text-xl lg:text-2xl text-center'>
-                Upcoming Events
-              </h1>
-              <FaCalendarAlt className='text-xl md:text-2xl lg:text-3xl' />
-            </CardHeader>
-            <CardContent className='flex flex-col justify-center items-start align-middle py-5'>
-              {/* Event 1 */}
-              <div className='w-full px-3 pb-5 flex flex-row justify-between items-center align-middle'>
-                {/* Title */}
-                <div>
-                  <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
-                    Event 1
-                  </h1>
+            <Link href='/events'>
+              <CardHeader className='flex flex-col justify-center align-middle items-center'>
+                <h1 className='font-bold text-base md:text-xl lg:text-2xl text-center'>
+                  Upcoming Events
+                </h1>
+                <FaCalendarAlt className='text-xl md:text-2xl lg:text-3xl' />
+              </CardHeader>
+              <CardContent className='flex flex-col justify-center items-start align-middle py-5'>
+                {/* Event 1 */}
+                <div className='w-full px-3 pb-5 flex flex-row justify-between items-center align-middle'>
+                  {/* Title */}
+                  <div>
+                    <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
+                      Event 1
+                    </h1>
+                  </div>
+
+                  {/* Date */}
+                  <div>
+                    <p className='font-semibold text-base md:text-lg lg:text-xl'>
+                      24/09/2024
+                    </p>
+                  </div>
                 </div>
 
-                {/* Date */}
-                <div>
-                  <p className='font-semibold text-base md:text-lg lg:text-xl'>
-                    24/09/2024
-                  </p>
-                </div>
-              </div>
+                {/* Event 2 */}
+                <div className='w-full px-3 pb-5 flex flex-row justify-between items-center align-middle'>
+                  {/* Title */}
+                  <div>
+                    <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
+                      Event 2
+                    </h1>
+                  </div>
 
-              {/* Event 2 */}
-              <div className='w-full px-3 pb-5 flex flex-row justify-between items-center align-middle'>
-                {/* Title */}
-                <div>
-                  <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
-                    Event 2
-                  </h1>
-                </div>
-
-                {/* Date */}
-                <div>
-                  <p className='font-semibold text-base md:text-lg lg:text-xl'>
-                    30/09/2024
-                  </p>
-                </div>
-              </div>
-
-              {/* Event 3 */}
-              <div className='w-full px-3 pb-5 flex flex-row justify-between items-center align-middle'>
-                {/* Title */}
-                <div>
-                  <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
-                    Event 3
-                  </h1>
+                  {/* Date */}
+                  <div>
+                    <p className='font-semibold text-base md:text-lg lg:text-xl'>
+                      30/09/2024
+                    </p>
+                  </div>
                 </div>
 
-                {/* Date */}
-                <div>
-                  <p className='font-semibold text-base md:text-lg lg:text-xl'>
-                    05/10/2024
-                  </p>
+                {/* Event 3 */}
+                <div className='w-full px-3 pb-5 flex flex-row justify-between items-center align-middle'>
+                  {/* Title */}
+                  <div>
+                    <h1 className='font-bold text-base md:text-xl lg:text-2xl'>
+                      Event 3
+                    </h1>
+                  </div>
+
+                  {/* Date */}
+                  <div>
+                    <p className='font-semibold text-base md:text-lg lg:text-xl'>
+                      05/10/2024
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
+              </CardContent>
+            </Link>
           </Card>
         </div>
 
