@@ -278,7 +278,7 @@ const page = () => {
                 {/* Finances */}
                 <div className='w-full pb-3 md:pb-5'>
                   <Button asChild className='w-full' variant={"default"}>
-                    <Link href="/">
+                    <Link href="/finances">
                       <MdOutlineAttachMoney className="mr-2 h-4 w-4" />
                       Finances
                     </Link>

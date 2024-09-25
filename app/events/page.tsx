@@ -1,21 +1,80 @@
 "use client"
 
-import { AlertTriangle, Briefcase, Clock, Users } from 'lucide-react';
+import { AlertTriangle, Briefcase, Clock, Edit, Trash2, Users } from 'lucide-react';
 import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form"
+import * as z from "zod"
+import { Input } from '@/components/ui/input';
+
+const eventSchema = z.object({
+    id: z.number(),
+    title: z.string().min(1, "Title is required"),
+    type: z.enum(["court", "meeting", "deadline"]),
+    time: z.string(),
+    date: z.date(),
+});
+
+type Event = z.infer<typeof eventSchema>;
 
 const page = () => {
     const [view, setView] = useState('month');
     const [selectedDate, setSelectedDate] = useState(new Date());
 
-    const events = [
+    const [events, setEvents] = useState<Event[]>([
         { id: 1, title: 'Court Hearing: Smith vs. Johnson', type: 'court', time: '09:00 AM', date: new Date() },
         { id: 2, title: 'Client Meeting: Jane Doe', type: 'meeting', time: '02:00 PM', date: new Date() },
         { id: 3, title: 'Filing Deadline: Case #1234', type: 'deadline', time: '11:59 PM', date: new Date(new Date().setDate(new Date().getDate() + 1)) },
-    ];
+    ]);
+
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
+
+    const form = useForm<Event>({
+        resolver: zodResolver(eventSchema),
+        defaultValues: {
+            id: 0,
+            title: "",
+            type: "court",
+            time: "",
+            date: new Date(),
+        },
+    });
 
     const renderEventIcon = (type: String) => {
         switch (type) {
@@ -28,6 +87,30 @@ const page = () => {
             default:
                 return <Clock className="h-4 w-4 mr-2" />;
         }
+    };
+
+    const handleDeleteEvent = (event: Event) => {
+        setEventToDelete(event);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDeleteEvent = () => {
+        if (eventToDelete) {
+            setEvents(events.filter(e => e.id !== eventToDelete.id));
+        }
+        setDeleteDialogOpen(false);
+        setEventToDelete(null);
+    };
+
+    const handleUpdateEvent = (event: Event) => {
+        setEventToEdit(event);
+        form.reset(event);
+        setEditDialogOpen(true);
+    };
+
+    const onSubmit = (data: Event) => {
+        setEvents(events.map(e => e.id === data.id ? data : e));
+        setEditDialogOpen(false);
     };
 
     const renderCalendar = () => {
@@ -111,6 +194,15 @@ const page = () => {
                                         {event.date.toDateString()} at {event.time}
                                     </div>
                                 </div>
+
+                                <div className="flex space-x-2">
+                                    <Button variant="outline" size="sm" onClick={() => handleUpdateEvent(event)}>
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleDeleteEvent(event)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
                         ))}
                     </CardContent>
@@ -134,6 +226,104 @@ const page = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to delete this event?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the event.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteEvent}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Event</DialogTitle>
+                        <DialogDescription>
+                            Make changes to your event here. Click save when you're done.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                            <FormField
+                                control={form.control}
+                                name="title"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Title</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Event title" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="type"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select event type" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="court">Court Hearing</SelectItem>
+                                                <SelectItem value="meeting">Client Meeting</SelectItem>
+                                                <SelectItem value="deadline">Filing Deadline</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="time"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Time</FormLabel>
+                                        <FormControl>
+                                            <Input type="time" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="date"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Date</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="date"
+                                                {...field}
+                                                value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
+                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <DialogFooter>
+                                <Button type="submit">Save changes</Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
