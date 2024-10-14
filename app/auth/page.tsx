@@ -33,6 +33,16 @@ import { RiLockPasswordFill } from "react-icons/ri";
 import { FaUserAlt } from "react-icons/fa";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { useRouter } from 'next/navigation'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+
+import toast, { Toaster } from 'react-hot-toast';
+import LoadingAnimation from '@/components/ui/Loading'
+
+const errorMsg = () => toast('Please Try Again!!!');
+const login = () => toast('Log in Successful!!!');
+const register = () => toast('Registration Successful!!!');
 
 const loginSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email" }),
@@ -47,6 +57,7 @@ const registerSchema = z.object({
 
 const page = () => {
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
 
     const loginForm = useForm<z.infer<typeof loginSchema>>({
         resolver: zodResolver(loginSchema),
@@ -74,18 +85,45 @@ const page = () => {
     const toggleRegisterPasswordVisibility = () => setShowRegisterPassword(!showRegisterPassword);
 
     // Login
-    const handleLogin = (data: z.infer<typeof loginSchema>) => {
-        console.log("Login data:", {
-            email: data.email,
-            password: data.password,
-        });
-
-        router.push("/dashboard");
+    const handleLogin = async (data: z.infer<typeof loginSchema>) => {
+        try {
+            await signInWithEmailAndPassword(auth, data.email, data.password);
+            console.log("Login successful");
+            router.push("/dashboard");
+            setIsLoading(true)
+            login()
+        } catch (error) {
+            console.error("Login error:", error);
+            setIsLoading(false)
+            errorMsg()
+        }
     }
 
     // Register
-    const handleRegister = (data: z.infer<typeof registerSchema>) => {
-        console.log("Register data:", data);
+    const handleRegister = async (data: z.infer<typeof registerSchema>) => {
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+            console.log("Registration successful", userCredential.user);
+
+            await setDoc(doc(db, "users", userCredential.user.uid), {
+                fullName: data.name,
+                email: data.email,
+                createdAt: new Date().toISOString()
+            });
+
+            console.log("User data saved to Firestore");
+            register()
+            setIsLoading(true)
+            router.push("/dashboard");
+        } catch (error) {
+            console.error("Registration error:", error);
+            setIsLoading(false)
+            errorMsg()
+        }
+    }
+
+    if (isLoading) {
+        return <LoadingAnimation />
     }
 
     return (
@@ -240,6 +278,8 @@ const page = () => {
                     </Tabs>
                 </CardContent>
             </Card>
+
+            <Toaster />
         </div>
     )
 }
