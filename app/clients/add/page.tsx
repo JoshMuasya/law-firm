@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import {
@@ -26,24 +26,34 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import toast, { Toaster } from 'react-hot-toast';
+import { addDoc, collection } from 'firebase/firestore'
+import { db, storage } from '@/lib/firebase'
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 
-const error = () => toast('Failed to Add Client!!! Try Again!!!');
+const errorMsg = () => toast('Failed to Add Client!!! Try Again!!!');
 const added = () => toast('Client Added Successfully!!!');
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png"];
 
 const formSchema = z.object({
     fullname: z.string().min(3, { message: "Full name must be at least 3 characters long" }),
     email: z.string().email({ message: "Please enter a valid email" }),
     phonenumber: z.string().min(10, { message: "Phone number must be at least 10 digits" }).regex(/^\d+$/, { message: "Phone number should contain only digits" }),
     address: z.string().min(5, { message: "Address must be at least 5 characters long" }),
-    dateAdded: z.string().refine((value) => !isNaN(Date.parse(value)), {
-        message: "Please provide a valid date",
-    }),
     picture: z
         .any()
+        .refine((files) => files?.length == 1, "Image is required.")
+        .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+        .refine(
+            (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+            ".jpg, .jpeg, and .png files are accepted."
+        )
 });
 
 const page = () => {
     const router = useRouter()
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -52,15 +62,34 @@ const page = () => {
             email: "",
             phonenumber: "",
             address: "",
-            dateAdded: "",
-            picture: "",
+            picture: undefined,
         },
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values)
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        try {
+            setIsSubmitting(true)
 
-        added()
+            const file = values.picture[0];
+            const storageRef = ref(storage, `client_images/${file.name}`);
+            await uploadBytes(storageRef, file);
+            const imageUrl = await getDownloadURL(storageRef);
+
+            const docRef = await addDoc(collection(db, "Clients"), {
+                fullname: values.fullname,
+                email: values.email,
+                phonenumber: values.phonenumber,
+                address: values.address,
+                imageUrl: imageUrl,
+                createdAt: new Date().toISOString()
+            });
+            added();
+        } catch (error) {
+            console.log("Error adding Client: ", error)
+            errorMsg()
+        } finally {
+            setIsSubmitting(false);
+        }
 
         router.push("/clients/view")
     }
@@ -132,7 +161,7 @@ const page = () => {
                             />
 
                             {/* Date Added */}
-                            <FormField
+                            {/* <FormField
                                 control={form.control}
                                 name="dateAdded"
                                 render={({ field }) => (
@@ -143,7 +172,7 @@ const page = () => {
                                         <FormMessage />
                                     </FormItem>
                                 )}
-                            />
+                            /> */}
 
                             {/* Picture */}
                             <FormField
@@ -152,7 +181,16 @@ const page = () => {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormControl>
-                                            <Input type="file" accept="image/*" {...field} />
+                                            <Input
+                                                type="file"
+                                                accept="image/jpeg, image/png"
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                    const files = e.target.files;
+                                                    if (files) {
+                                                        field.onChange(files);
+                                                    }
+                                                }}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
