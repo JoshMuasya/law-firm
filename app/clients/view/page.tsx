@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Plus } from 'lucide-react';
 
 import toast, { Toaster } from 'react-hot-toast';
 import { Input } from '@/components/ui/input';
@@ -32,10 +31,25 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+
+import { Search, Plus, Filter } from 'lucide-react';
+
+import { Label } from "@/components/ui/label"
+
 const page = () => {
     const [clients, setClients] = useState<Client[]>([])
+    const [filteredClients, setFilteredClients] = useState<Client[]>([])
     const [loading, setLoading] = useState(true)
     const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
+    const [searchTerm, setSearchTerm] = useState('')
+    const [filterName, setFilterName] = useState('')
+    const [filterEmail, setFilterEmail] = useState('')
+    const [filterPhone, setFilterPhone] = useState('')
 
     const fetchClients = async () => {
         try {
@@ -81,6 +95,31 @@ const page = () => {
         }
     }
 
+    useEffect(() => {
+        const filtered = clients.filter(client =>
+            client.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            client.phonenumber.includes(searchTerm)
+        )
+        setFilteredClients(filtered)
+    }, [searchTerm, clients])
+
+    const applyFilters = () => {
+        const filtered = clients.filter(client =>
+            (filterName ? client.fullname.toLowerCase().includes(filterName.toLowerCase()) : true) &&
+            (filterEmail ? client.email.toLowerCase().includes(filterEmail.toLowerCase()) : true) &&
+            (filterPhone ? client.phonenumber.includes(filterPhone) : true)
+        )
+        setFilteredClients(filtered)
+    }
+
+    const clearFilters = () => {
+        setFilterName('')
+        setFilterEmail('')
+        setFilterPhone('')
+        setFilteredClients(clients)
+    }
+
     return (
         <div className='bg-muted flex flex-col justify-center items-center align-middle w-full h-screen'>
             <Card className='w-11/12 md:w-5/6'>
@@ -92,9 +131,65 @@ const page = () => {
                     <div className="flex space-x-2 mb-4">
                         <div className="relative flex-grow">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                            <Input placeholder="Search clients..." className="pl-8" />
+                            <Input
+                                placeholder="Search clients..."
+                                className="pl-8"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
-                        <Button variant="outline">Filter</Button>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline">
+                                    <Filter className="mr-2 h-4 w-4" /> Filter
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                                <div className="grid gap-4">
+                                    <div className="space-y-2">
+                                        <h4 className="font-medium leading-none">Filter Clients</h4>
+                                        <p className="text-sm text-muted-foreground">
+                                            Enter criteria to filter the client list.
+                                        </p>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <div className="grid grid-cols-3 items-center gap-4">
+                                            <Label htmlFor="name">Name</Label>
+                                            <Input
+                                                id="name"
+                                                value={filterName}
+                                                onChange={(e) => setFilterName(e.target.value)}
+                                                className="col-span-2 h-8"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-3 items-center gap-4">
+                                            <Label htmlFor="email">Email</Label>
+                                            <Input
+                                                id="email"
+                                                value={filterEmail}
+                                                onChange={(e) => setFilterEmail(e.target.value)}
+                                                className="col-span-2 h-8"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-3 items-center gap-4">
+                                            <Label htmlFor="phone">Phone</Label>
+                                            <Input
+                                                id="phone"
+                                                value={filterPhone}
+                                                onChange={(e) => setFilterPhone(e.target.value)}
+                                                className="col-span-2 h-8"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <Button variant="outline" onClick={clearFilters}>
+                                            Clear Filters
+                                        </Button>
+                                        <Button onClick={applyFilters}>Apply Filters</Button>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                         <Button asChild>
                             <Link href="/clients/add">Add Client</Link>
                         </Button>
@@ -116,23 +211,23 @@ const page = () => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {clients.map((client) => (
+                                {filteredClients.map((client) => (
                                     <TableRow key={client.id}>
                                         <TableCell>{client.fullname}</TableCell>
                                         <TableCell>{client.email}</TableCell>
                                         <TableCell>{client.phonenumber}</TableCell>
                                         <TableCell>{client.address}</TableCell>
                                         <TableCell>
-                                            <Button asChild>
+                                            <Button asChild className='mr-2 my-2'>
                                                 <Link href={`/clients/view/${client.id}`}>View</Link>
                                             </Button>
-                                            <Button asChild className="mr-2">
+                                            <Button asChild className="mr-2 my-2">
                                                 <Link href={`/clients/edit/${client.id}`}>Edit</Link>
                                             </Button>
 
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
-                                                    <Button variant="destructive" onClick={() => setClientToDelete(client)}>Delete</Button>
+                                                    <Button variant="destructive" className="mr-2 my-2" onClick={() => setClientToDelete(client)}>Delete</Button>
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
                                                     <AlertDialogHeader>

@@ -1,4 +1,6 @@
-import React from 'react'
+'use client'
+
+import React, { useEffect, useState } from 'react'
 
 import {
     Card,
@@ -22,10 +24,76 @@ import {
 import { MdEmail } from "react-icons/md";
 import { FaPhoneAlt } from 'react-icons/fa';
 import { FaLocationDot } from "react-icons/fa6";
+import { Client } from '@/lib'
+import { useParams, useRouter } from 'next/navigation'
+import { collection, doc, DocumentSnapshot, getDoc, getDocs, Timestamp } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
-const page = () => {
+const page = ({ params }: { params: { viewclient: string } }) => {
+    const [client, setClient] = useState<Client | null>(null)
+    const [loading, setLoading] = useState(true)
+    const router = useRouter()
+
+    // Utility function to format date
+    const formatDate = (timestamp: Timestamp | string) => {
+        if (timestamp instanceof Timestamp) {
+            const date = timestamp.toDate(); // Convert Firestore Timestamp to JavaScript Date
+            const year = date.getFullYear();
+            const month = (`0${date.getMonth() + 1}`).slice(-2); // Months are 0-based
+            const day = (`0${date.getDate()}`).slice(-2);
+
+            return `${year}-${month}-${day}`;
+        }
+
+        // Handle string dates
+        const date = new Date(timestamp);
+        const year = date.getFullYear();
+        const month = (`0${date.getMonth() + 1}`).slice(-2);
+        const day = (`0${date.getDate()}`).slice(-2);
+
+        return `${year}-${month}-${day}`;
+    };
+
+    useEffect(() => {
+        const fetchClient = async () => {
+            if (!params.viewclient) {
+                setLoading(false)
+                return
+            }
+
+            try {
+                const clientDoc = doc(db, 'Clients', params.viewclient);
+                const clientSnapshot: DocumentSnapshot = await getDoc(clientDoc);
+
+                if (clientSnapshot.exists()) {
+                    const clientData = clientSnapshot.data() as Client;
+                    clientData.id = clientSnapshot.id;
+                    setClient(clientData);
+                } else {
+                    // router.push('/clients'); // Redirect to clients list if client not found
+                }
+            } catch (error) {
+                console.error("Error fetching client: ", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchClient()
+    }, [params.viewclient, router])
+
+    if (loading) {
+        return <div>Loading...</div>
+    }
+
+    if (!client) {
+        return <div>Client not found</div>
+    }
+
+    console.log(formatDate(client.createdAt))
+
     return (
-        <div className='bg-muted flex flex-col justify-center items-center align-middle w-full h-screen'>
+        <div className='bg-muted flex flex-col justify-center items-center align-middle w-full h-full py-10'>
             <Card className='w-11/12 md:w-3/4'>
                 <CardHeader>
                     <CardTitle
@@ -36,7 +104,7 @@ const page = () => {
                         </h1>
 
                         <Button asChild>
-                            <Link href="/">Edit Profile</Link>
+                            <Link href={`/clients/edit/${client.id}`}>Edit Profile</Link>
                         </Button>
 
                     </CardTitle>
@@ -49,8 +117,8 @@ const page = () => {
                                 {/* Picture */}
                                 <div className='pr-12'>
                                     <img
-                                        src='/lady.jpg'
-                                        alt='laura-wilson'
+                                        src={client.imageUrl || '/lady.jpg'}
+                                        alt={`${client.fullname}'s profile`}
                                         className='w-24 h-24 rounded-full'
                                     />
                                 </div>
@@ -59,13 +127,13 @@ const page = () => {
                                 <div>
                                     {/* Fullname */}
                                     <div className='pb-3 md:pb-5'>
-                                        <h1 className='text-2xl md:text-3xl lg:text-4xl font-bold'>John Doe</h1>
+                                        <h1 className='text-2xl md:text-3xl lg:text-4xl font-bold'>{client.fullname}</h1>
                                     </div>
 
                                     {/* Date Joined */}
                                     <div>
                                         <h3 className='text-base md:text-lg'>
-                                            Client Since: January 2022
+                                            Client Since: {client.createdAt ? formatDate(client.createdAt) : 'Not available'}
                                         </h3>
                                     </div>
                                 </div>
@@ -78,14 +146,14 @@ const page = () => {
                                     <div className='pr-3 md:pr-6 flex flex-row justify-center align-middle'>
                                         <MdEmail className='text-xl md:text-2xl text-primary' />
 
-                                        <h1 className='text-base md:text-lg font-semibold pl-2 md:pl-4'>john@gmail.com</h1>
+                                        <h1 className='text-base md:text-lg font-semibold pl-2 md:pl-4'>{client.email}</h1>
                                     </div>
 
                                     {/* Phone Number */}
                                     <div className='pr-3 md:pr-6 flex flex-row justify-center align-middle'>
                                         <FaPhoneAlt className='text-xl md:text-2xl text-primary' />
 
-                                        <h1 className='text-base md:text-lg font-semibold pl-2 md:pl-4'>+254 798 024 535</h1>
+                                        <h1 className='text-base md:text-lg font-semibold pl-2 md:pl-4'>{client.phonenumber}</h1>
                                     </div>
                                 </div>
 
@@ -93,7 +161,7 @@ const page = () => {
                                 <div className='pr-3 md:pr-6 flex flex-row justify-center align-middle leading-4'>
                                     <FaLocationDot className='text-xl md:text-2xl text-primary' />
 
-                                    <h1 className='text-base md:text-lg font-semibold pl-2 md:pl-4'>Westlands Commercial Center</h1>
+                                    <h1 className='text-base md:text-lg font-semibold pl-2 md:pl-4'>{client.address}</h1>
                                 </div>
                             </div>
                         </CardContent>
