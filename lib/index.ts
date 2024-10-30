@@ -8,6 +8,32 @@ export interface Client {
     imageUrl: string;
 }
 
+export interface Cases {
+    id: string;
+    caseNumber: string;
+    caseName: string;
+    clientName: string;
+    attorneyName: string;
+    courtName: string;
+
+    practiceArea: 'civil' | 'criminal' | 'corporate' | 'family' | 'property';
+    caseStatus: 'active' | 'pending' | 'closed' | 'appeal';
+
+    instructionsDate: string;
+    caseDescription?: string;
+    caseSummary?: string;
+
+    expenses?: {
+        description: string;
+        amount: number;
+    }[];
+
+    documents?: {
+        file?: any;
+        description: string;
+    }[];
+}
+
 export interface FormDataInterface {
     caseNumber: string;
     caseName: string;

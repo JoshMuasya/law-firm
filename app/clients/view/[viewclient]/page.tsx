@@ -70,7 +70,7 @@ const page = ({ params }: { params: { viewclient: string } }) => {
                     clientData.id = clientSnapshot.id;
                     setClient(clientData);
                 } else {
-                    // router.push('/clients'); // Redirect to clients list if client not found
+                    router.push('/clients/view'); // Redirect to clients list if client not found
                 }
             } catch (error) {
                 console.error("Error fetching client: ", error)
@@ -89,8 +89,6 @@ const page = ({ params }: { params: { viewclient: string } }) => {
     if (!client) {
         return <div>Client not found</div>
     }
-
-    console.log(formatDate(client.createdAt))
 
     return (
         <div className='bg-muted flex flex-col justify-center items-center align-middle w-full h-full py-10'>

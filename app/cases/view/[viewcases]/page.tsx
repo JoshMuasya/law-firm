@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 import {
     Card,
@@ -40,6 +40,9 @@ import { z } from "zod"
 
 import toast, { Toaster } from 'react-hot-toast';
 import { useRouter } from 'next/navigation'
+import { Cases } from '@/lib'
+import { doc, DocumentSnapshot, getDoc, Timestamp } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 const error = () => toast('Failed to Add Client!!! Try Again!!!');
 const added = () => toast('Client Added Successfully!!!');
@@ -81,8 +84,61 @@ const commFormSchema = z.object({
     commsummary: z.string().min(3, { message: "Summary must be at least 3 characters long" }),
 });
 
-const page = () => {
+const page = ({ params }: { params: { viewcase: string } }) => {
+    const [caseData, setCaseData] = useState<Cases | null>(null)
+    const [loading, setLoading] = useState(true)
     const router = useRouter()
+
+    const formatDate = (timestamp: Timestamp | string) => {
+        if (timestamp instanceof Timestamp) {
+            const date = timestamp.toDate(); // Convert Firestore Timestamp to JavaScript Date
+            const year = date.getFullYear();
+            const month = (`0${date.getMonth() + 1}`).slice(-2); // Months are 0-based
+            const day = (`0${date.getDate()}`).slice(-2);
+
+            return `${year}-${month}-${day}`;
+        }
+
+        // Handle string dates
+        const date = new Date(timestamp);
+        const year = date.getFullYear();
+        const month = (`0${date.getMonth() + 1}`).slice(-2);
+        const day = (`0${date.getDate()}`).slice(-2);
+
+        return `${year}-${month}-${day}`;
+    };
+
+    useEffect(() => {
+        const fetchCase = async () => {
+            if (!params.viewcase) {
+                setLoading(false)
+                return
+            }
+
+            try {
+                const caseDoc = doc(db, 'Cases', params.viewcase);
+                const caseSnapshot: DocumentSnapshot = await getDoc(caseDoc);
+
+                if (caseSnapshot.exists()) {
+                    const caseData = caseSnapshot.data() as Cases;
+                    caseData.id = caseSnapshot.id;
+                    setCaseData(caseData);
+                } else {
+                    // router.push('/cases/view'); // Redirect to clients list if client not found
+                }
+            } catch (error) {
+                console.error("Error fetching Case: ", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchCase()
+    }, [params.viewcase, router])
+
+    if (loading) {
+        return <div>Loading...</div>
+    }
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
