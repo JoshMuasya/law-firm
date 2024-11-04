@@ -47,53 +47,97 @@ import { db } from '@/lib/firebase'
 const error = () => toast('Failed to Add Client!!! Try Again!!!');
 const added = () => toast('Client Added Successfully!!!');
 
-const formSchema = z.object({
-    milestone: z.string().min(3, { message: "Milestone must be at least 3 characters long" }),
-    dateDue: z.string().refine((value) => !isNaN(Date.parse(value)), {
-        message: "Please provide a valid date",
-    }),
+const eventSchema = z.object({
+    title: z.string().min(2, { message: "Title must be at least 2 characters" }),
+    date: z.string(),
+    description: z.string().optional()
 });
 
-const eventFormSchema = z.object({
-    event: z.string().min(3, { message: "Name must be at least 3 characters long" }),
-    dateDue: z.string().refine((value) => !isNaN(Date.parse(value)), {
-        message: "Please provide a valid date",
-    }),
+const documentSchema = z.object({
+    title: z.string().min(2, { message: "Title must be at least 2 characters" }),
+    type: z.string(),
+    url: z.string().optional()
 });
 
-const docFormSchema = z.object({
-    docname: z.string().min(3, { message: "Name must be at least 3 characters long" }),
-    document: z
-        .any()
+const expenseSchema = z.object({
+    name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+    date: z.string(),
+    amount: z.string(),
+    balance: z.string()
 });
 
-const expenseFormSchema = z.object({
-    expensename: z.string().min(3, { message: "Name must be at least 3 characters long" }),
-    amount: z.string().min(3, { message: "Amount must be at least 3 characters long" }),
-    datePaid: z.string().refine((value) => !isNaN(Date.parse(value)), {
-        message: "Please provide a valid date",
-    }),
+const communicationSchema = z.object({
+    title: z.string().min(2, { message: "Title must be at least 2 characters" }),
+    date: z.string(),
+    type: z.string(),
+    summary: z.string(),
+    details: z.string()
 });
 
-const commFormSchema = z.object({
-    commtitle: z.string().min(3, { message: "Title must be at least 3 characters long" }),
-    commdate: z.string().refine((value) => !isNaN(Date.parse(value)), {
-        message: "Please provide a valid date",
-    }),
-    commtype: z.string().min(3, { message: "Type must be at least 3 characters long" }),
-    commsummary: z.string().min(3, { message: "Summary must be at least 3 characters long" }),
+const milestoneSchema = z.object({
+    title: z.string().min(2, { message: "Title must be at least 2 characters" }),
+    date: z.string(),
+    description: z.string().optional()
 });
 
-const page = ({ params }: { params: { viewcase: string } }) => {
+const page = ({ params }: { params: { viewcases: string } }) => {
     const [caseData, setCaseData] = useState<Cases | null>(null)
     const [loading, setLoading] = useState(true)
     const router = useRouter()
 
+    const eventForm = useForm<z.infer<typeof eventSchema>>({
+        resolver: zodResolver(eventSchema),
+        defaultValues: {
+            title: "",
+            date: "",
+            description: ""
+        },
+    });
+
+    const documentForm = useForm<z.infer<typeof documentSchema>>({
+        resolver: zodResolver(documentSchema),
+        defaultValues: {
+            title: "",
+            type: "",
+            url: ""
+        },
+    });
+
+    const expenseForm = useForm<z.infer<typeof expenseSchema>>({
+        resolver: zodResolver(expenseSchema),
+        defaultValues: {
+            name: "",
+            date: "",
+            amount: "",
+            balance: ""
+        },
+    });
+
+    const communicationForm = useForm<z.infer<typeof communicationSchema>>({
+        resolver: zodResolver(communicationSchema),
+        defaultValues: {
+            title: "",
+            date: "",
+            type: "",
+            summary: "",
+            details: ""
+        },
+    });
+
+    const milestoneForm = useForm<z.infer<typeof milestoneSchema>>({
+        resolver: zodResolver(milestoneSchema),
+        defaultValues: {
+            title: "",
+            date: "",
+            description: ""
+        },
+    });
+
     const formatDate = (timestamp: Timestamp | string) => {
         if (timestamp instanceof Timestamp) {
-            const date = timestamp.toDate(); // Convert Firestore Timestamp to JavaScript Date
+            const date = timestamp.toDate();
             const year = date.getFullYear();
-            const month = (`0${date.getMonth() + 1}`).slice(-2); // Months are 0-based
+            const month = (`0${date.getMonth() + 1}`).slice(-2);
             const day = (`0${date.getDate()}`).slice(-2);
 
             return `${year}-${month}-${day}`;
@@ -110,19 +154,19 @@ const page = ({ params }: { params: { viewcase: string } }) => {
 
     useEffect(() => {
         const fetchCase = async () => {
-            if (!params.viewcase) {
+            if (!params.viewcases) {
                 setLoading(false)
                 return
             }
 
             try {
-                const caseDoc = doc(db, 'Cases', params.viewcase);
-                const caseSnapshot: DocumentSnapshot = await getDoc(caseDoc);
+                const casesDoc = doc(db, 'Cases', params.viewcases);
+                const casesSnapshot: DocumentSnapshot = await getDoc(casesDoc);
 
-                if (caseSnapshot.exists()) {
-                    const caseData = caseSnapshot.data() as Cases;
-                    caseData.id = caseSnapshot.id;
-                    setCaseData(caseData);
+                if (casesSnapshot.exists()) {
+                    const casesData = casesSnapshot.data() as Cases;
+                    casesData.id = casesSnapshot.id;
+                    setCaseData(casesData);
                 } else {
                     // router.push('/cases/view'); // Redirect to clients list if client not found
                 }
@@ -134,140 +178,97 @@ const page = ({ params }: { params: { viewcase: string } }) => {
         }
 
         fetchCase()
-    }, [params.viewcase, router])
+    }, [params.viewcases, router])
+
+    async function onEventSubmit(values: z.infer<typeof eventSchema>) {
+        try {
+            // Perform your submit action here
+            console.log("Event Submitted", values);
+            // You can also make an API call, for example:
+            // await api.submitEvent(values);
+        } catch (error) {
+            console.error("Failed to submit event", error);
+        }
+    }
+
+    async function onDocumentSubmit(values: z.infer<typeof documentSchema>) {
+        try {
+            console.log("Document Submitted", values);
+            // e.g., await api.submitDocument(values);
+        } catch (error) {
+            console.error("Failed to submit document", error);
+        }
+    }
+
+    async function onExpenseSubmit(values: z.infer<typeof expenseSchema>) {
+        try {
+            console.log("Expense Submitted", values);
+            // e.g., await api.submitExpense(values);
+        } catch (error) {
+            console.error("Failed to submit expense", error);
+        }
+    }
+
+    async function onCommunicationSubmit(values: z.infer<typeof communicationSchema>) {
+        try {
+            console.log("Communication Submitted", values);
+            // e.g., await api.submitCommunication(values);
+        } catch (error) {
+            console.error("Failed to submit communication", error);
+        }
+    }
+
+    async function onMilestoneSubmit(values: z.infer<typeof milestoneSchema>) {
+        try {
+            console.log("Milestone Submitted", values);
+            // e.g., await api.submitMilestone(values);
+        } catch (error) {
+            console.error("Failed to submit milestone", error);
+        }
+    }
 
     if (loading) {
         return <div>Loading...</div>
-    }
-
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            milestone: '',
-            dateDue: '',
-        },
-    })
-
-    const eventForm = useForm<z.infer<typeof eventFormSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            event: '',
-            dateDue: '',
-        },
-    })
-
-    const docForm = useForm<z.infer<typeof docFormSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            docname: '',
-            document: '',
-        },
-    })
-
-    const expenseForm = useForm<z.infer<typeof expenseFormSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            expensename: '',
-            amount: '',
-            datePaid: '',
-        },
-    })
-
-    const commForm = useForm<z.infer<typeof commFormSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            commtitle: '',
-            commdate: '',
-            commsummary: '',
-            commtype: '',
-        },
-    })
-
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values)
-
-        added()
-    }
-
-    function onEventSubmit(values: z.infer<typeof eventFormSchema>) {
-        console.log(values)
-
-        added()
-    }
-
-    function onDocSubmit(values: z.infer<typeof docFormSchema>) {
-        console.log(values)
-
-        added()
-    }
-
-    function onExpenseSubmit(values: z.infer<typeof expenseFormSchema>) {
-        console.log(values)
-
-        added()
-    }
-
-    function onCommSubmit(values: z.infer<typeof commFormSchema>) {
-        console.log(values)
-
-        added()
     }
 
     return (
         <div className='bg-muted flex flex-col justify-center items-center align-middle w-full h-full py-10'>
             <Card className='w-11/12 md:w-3/4'>
                 <CardHeader>
-                    <CardTitle
-                        className='text-center text-2xl md:text-3xl lg:text-4xl pb-3 font-bold flex flex-row justify-between align-middle items-center'
-                    >
-                        <h1>
-                            Case Management
-                        </h1>
-
+                    <CardTitle className='text-center text-2xl md:text-3xl lg:text-4xl pb-3 font-bold flex flex-row justify-between align-middle items-center'>
+                        <h1>Case Management</h1>
                         <Button asChild>
-                            <Link href="/">Active</Link>
+                            <Link href="/">{caseData?.caseStatus || 'Active'}</Link>
                         </Button>
-
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                     <Card className='w-full flex flex-col justify-center items-start py-5'>
                         <CardContent>
-                            {/* Top */}
                             <div className='flex flex-col justify-center items-start align-middle'>
-                                {/* Title */}
                                 <h1 className='font-bold text-base md:text-lg lg:text-xl py-2'>
-                                    Smith vs. Johnson
+                                    {caseData?.caseName || 'Untitled Case'}
                                 </h1>
-
-                                {/* Number and Type */}
                                 <h3 className='font-medium text-base md:text-lg lg:text-xl pb-3'>
-                                    Case #1234 - Civil Litigation
+                                    Case #{caseData?.caseNumber || 'N/A'} - {caseData?.practiceArea || 'N/A'}
                                 </h3>
                             </div>
 
-                            {/* Middle */}
                             <div className='flex flex-col justify-center items-start align-middle'>
-                                {/* Attorney */}
                                 <h3 className='text-base md:text-lg lg:text-xl py-2'>
-                                    <strong>Assigned Attorney:</strong> Jane Doe
+                                    <strong>Assigned Attorney:</strong> {caseData?.attorneyName || 'N/A'}
                                 </h3>
-
-                                {/* Client */}
                                 <h3 className='text-base md:text-lg lg:text-xl pb-2'>
-                                    <strong>Client:</strong> John Smith
+                                    <strong>Client:</strong> {caseData?.clientName || 'N/A'}
                                 </h3>
-
-                                {/* Date */}
                                 <h3 className='text-base md:text-lg lg:text-xl pb-3'>
-                                    <strong>Filed Date:</strong> 2024-03-15
+                                    <strong>Filed Date:</strong> {caseData?.instructionsDate ? formatDate(caseData?.instructionsDate) : 'N/A'}
                                 </h3>
                             </div>
 
-                            {/* Bottom */}
                             <div className='flex flex-col justify-center items-start align-middle pt-3'>
                                 <p className='text-justify'>
-                                    Lorem Ipsum
+                                    {caseData?.caseDescription || 'No description available'}
                                 </p>
                             </div>
                         </CardContent>
@@ -282,14 +283,16 @@ const page = ({ params }: { params: { viewcase: string } }) => {
                             <TabsTrigger value="expenses">Expenses</TabsTrigger>
                             <TabsTrigger value="communication">Communication</TabsTrigger>
                         </TabsList>
+
                         <TabsContent value="overview">
                             <Card className='py-10'>
                                 <CardHeader>
-                                    <CardTitle className='text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>Case Timeline</CardTitle>
+                                    <CardTitle className='text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>
+                                        Case Timeline
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <div className='flex flex-col justify-center align-middle items-start w-full'>
-                                        {/* Upcoming Events */}
                                         <div className='w-full'>
                                             <h1 className='text-lg md:text-xl lg:text-2xl pb-3 font-bold'>
                                                 Upcoming Events
@@ -302,66 +305,79 @@ const page = ({ params }: { params: { viewcase: string } }) => {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    <TableRow>
-                                                        <TableCell>Second Hearing</TableCell>
-                                                        <TableCell>23/10/2024</TableCell>
-                                                    </TableRow>
+                                                    {caseData?.events?.map((event, index) => (
+                                                        <TableRow key={index}>
+                                                            <TableCell>{event.title}</TableCell>
+                                                            <TableCell>{formatDate(event.date)}</TableCell>
+                                                        </TableRow>
+                                                    )) || (
+                                                            <TableRow>
+                                                                <TableCell colSpan={2}>No upcoming events</TableCell>
+                                                            </TableRow>
+                                                        )}
                                                 </TableBody>
                                             </Table>
 
-                                            {/* Add Milestones */}
-                                            <h1 className='text-lg md:text-xl lg:text-2xl py-3 font-bold'>
-                                                Add Event
-                                            </h1>
+                                            {/* Add Events */}
+                                            <div className='py-5'>
+                                                <h1 className='text-lg md:text-xl lg:text-2xl pb-3 font-bold'>
+                                                    Add Events
+                                                </h1>
+                                                <Form {...eventForm}>
+                                                    <form onSubmit={eventForm.handleSubmit(onEventSubmit)} className="space-y-8">
+                                                        {/* Title */}
+                                                        <FormField
+                                                            control={eventForm.control}
+                                                            name="title"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input placeholder="Event Title" {...field} />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
 
-                                            {/* Events Form */}
-                                            <div>
-                                                <Card className='w-full'>
-                                                    <CardContent className="grid gap-4">
-                                                        <Form {...form}>
-                                                            <form onSubmit={eventForm.handleSubmit(onEventSubmit)} className="space-y-8 pt-5">
-                                                                {/* Event Name */}
-                                                                <FormField
-                                                                    control={eventForm.control}
-                                                                    name="event"
-                                                                    render={({ field }) => (
-                                                                        <FormItem>
-                                                                            <FormControl>
-                                                                                <Input placeholder="Event Name" {...field} />
-                                                                            </FormControl>
-                                                                            <FormMessage />
-                                                                        </FormItem>
-                                                                    )}
-                                                                />
+                                                        {/* Date */}
+                                                        <FormField
+                                                            control={eventForm.control}
+                                                            name="date"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input type="date" placeholder="Event Date" {...field} />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
 
-                                                                {/* Date Due */}
-                                                                <FormField
-                                                                    control={eventForm.control}
-                                                                    name="dateDue"
-                                                                    render={({ field }) => (
-                                                                        <FormItem>
-                                                                            <FormControl>
-                                                                                <Input type="date" placeholder="Date Due" {...field} />
-                                                                            </FormControl>
-                                                                            <FormMessage />
-                                                                        </FormItem>
-                                                                    )}
-                                                                />
+                                                        {/* Description */}
+                                                        <FormField
+                                                            control={eventForm.control}
+                                                            name="description"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input placeholder="Event Description" {...field} />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
 
-                                                                <Button type="submit">Submit</Button>
-                                                            </form>
-                                                        </Form>
-                                                    </CardContent>
-                                                </Card>
+                                                        <Button type="submit">Submit</Button>
+                                                    </form>
+                                                </Form>
+
                                             </div>
                                         </div>
 
-                                        {/* Milestones */}
                                         <div className='w-full'>
                                             <h1 className='text-lg md:text-xl lg:text-2xl py-3 font-bold'>
                                                 Upcoming Milestones
                                             </h1>
-
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
@@ -370,72 +386,84 @@ const page = ({ params }: { params: { viewcase: string } }) => {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    <TableRow>
-                                                        <TableCell>Motion Filling</TableCell>
-                                                        <TableCell>11/10/2024</TableCell>
-                                                    </TableRow>
-
-                                                    <TableRow>
-                                                        <TableCell>Client Meeting</TableCell>
-                                                        <TableCell>15/10/2024</TableCell>
-                                                    </TableRow>
+                                                    {caseData?.milestones?.map((milestone, index) => (
+                                                        <TableRow key={index}>
+                                                            <TableCell>{milestone.title}</TableCell>
+                                                            <TableCell>{formatDate(milestone.date)}</TableCell>
+                                                        </TableRow>
+                                                    )) || (
+                                                            <TableRow>
+                                                                <TableCell colSpan={2}>No upcoming milestones</TableCell>
+                                                            </TableRow>
+                                                        )}
                                                 </TableBody>
                                             </Table>
 
-                                            {/* Add Milestones */}
-                                            <h1 className='text-lg md:text-xl lg:text-2xl py-3 font-bold'>
-                                                Add Milestones
-                                            </h1>
+                                            {/* Add Milstones */}
+                                            <div className='py-5'>
+                                                <h1 className='text-lg md:text-xl lg:text-2xl pb-3 font-bold'>
+                                                    Add Milstones
+                                                </h1>
+                                                <Form {...milestoneForm}>
+                                                    <form onSubmit={milestoneForm.handleSubmit(onMilestoneSubmit)} className="space-y-8">
+                                                        {/* Title */}
+                                                        <FormField
+                                                            control={milestoneForm.control}
+                                                            name="title"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input placeholder="Milestone Title" {...field} />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
 
-                                            {/* Milestone Form */}
-                                            <div>
-                                                <Card className='w-full'>
-                                                    <CardContent className="grid gap-4">
-                                                        <Form {...form}>
-                                                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pt-5">
-                                                                {/* Milestone Name */}
-                                                                <FormField
-                                                                    control={form.control}
-                                                                    name="milestone"
-                                                                    render={({ field }) => (
-                                                                        <FormItem>
-                                                                            <FormControl>
-                                                                                <Input placeholder="Milestone Name" {...field} />
-                                                                            </FormControl>
-                                                                            <FormMessage />
-                                                                        </FormItem>
-                                                                    )}
-                                                                />
+                                                        {/* Date */}
+                                                        <FormField
+                                                            control={milestoneForm.control}
+                                                            name="date"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input type="date" placeholder="Milestone Date" {...field} />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
 
-                                                                {/* Date Due */}
-                                                                <FormField
-                                                                    control={form.control}
-                                                                    name="dateDue"
-                                                                    render={({ field }) => (
-                                                                        <FormItem>
-                                                                            <FormControl>
-                                                                                <Input type="date" placeholder="Date Due" {...field} />
-                                                                            </FormControl>
-                                                                            <FormMessage />
-                                                                        </FormItem>
-                                                                    )}
-                                                                />
+                                                        {/* Description */}
+                                                        <FormField
+                                                            control={milestoneForm.control}
+                                                            name="description"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input placeholder="Milestone Description" {...field} />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
 
-                                                                <Button type="submit">Submit</Button>
-                                                            </form>
-                                                        </Form>
-                                                    </CardContent>
-                                                </Card>
+                                                        <Button type="submit">Submit</Button>
+                                                    </form>
+                                                </Form>
                                             </div>
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
                         </TabsContent>
+
                         <TabsContent value="documents">
                             <Card className='py-10'>
                                 <CardHeader>
-                                    <CardTitle className='text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>Case Documents</CardTitle>
+                                    <CardTitle className='text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>
+                                        Case Documents
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <Table>
@@ -446,69 +474,86 @@ const page = ({ params }: { params: { viewcase: string } }) => {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            <TableRow>
-                                                <TableCell>Document 1</TableCell>
-                                                <TableCell>
-                                                    <Button asChild>
-                                                        <Link href=''>View</Link>
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
+                                            {caseData?.documents?.map((doc, index) => (
+                                                <TableRow key={index}>
+                                                    <TableCell>{doc.title}</TableCell>
+                                                    <TableCell>
+                                                        <Button asChild>
+                                                            <Link href={doc.url || ''}>View</Link>
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )) || (
+                                                    <TableRow>
+                                                        <TableCell colSpan={2}>No documents available</TableCell>
+                                                    </TableRow>
+                                                )}
                                         </TableBody>
                                     </Table>
 
-                                    {/* Add Document */}
-                                    <h1 className='text-lg md:text-xl lg:text-2xl py-3 font-bold'>
-                                        Add Document
-                                    </h1>
+                                    {/* Add Docs */}
+                                    <div className='py-5'>
+                                        <h1 className='text-lg md:text-xl lg:text-2xl pb-3 font-bold'>
+                                            Add Documents
+                                        </h1>
+                                        <Form {...documentForm}>
+                                            <form onSubmit={documentForm.handleSubmit(onDocumentSubmit)} className="space-y-8">
+                                                {/* Title */}
+                                                <FormField
+                                                    control={documentForm.control}
+                                                    name="title"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Document Title" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                    {/* Events Form */}
-                                    <div>
-                                        <Card className='w-full'>
-                                            <CardContent className="grid gap-4">
-                                                <Form {...form}>
-                                                    <form onSubmit={docForm.handleSubmit(onDocSubmit)} className="space-y-8 pt-5">
-                                                        {/* Event Name */}
-                                                        <FormField
-                                                            control={docForm.control}
-                                                            name="docname"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <Input placeholder="Document Name" {...field} />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                {/* Type */}
+                                                <FormField
+                                                    control={documentForm.control}
+                                                    name="type"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Document Type" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                                        {/* Document */}
-                                                        <FormField
-                                                            control={docForm.control}
-                                                            name="document"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <Input type="file" accept="image/*" {...field} />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                {/* URL */}
+                                                <FormField
+                                                    control={documentForm.control}
+                                                    name="url"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Document URL" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                                        <Button type="submit">Submit</Button>
-                                                    </form>
-                                                </Form>
-                                            </CardContent>
-                                        </Card>
+                                                <Button type="submit">Submit</Button>
+                                            </form>
+                                        </Form>
                                     </div>
                                 </CardContent>
                             </Card>
                         </TabsContent>
+
                         <TabsContent value="communication">
                             <Card className='py-10'>
                                 <CardHeader>
-                                    <CardTitle className='text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>Communication Logs</CardTitle>
+                                    <CardTitle className='text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>
+                                        Communication Logs
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <Table>
@@ -522,108 +567,122 @@ const page = ({ params }: { params: { viewcase: string } }) => {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            <TableRow>
-                                                <TableCell>Communication 1</TableCell>
-                                                <TableCell>20/09/2024</TableCell>
-                                                <TableCell>Email</TableCell>
-                                                <TableCell>Lorem Ipsum</TableCell>
-                                                <TableCell>
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <Button variant="outline">See More</Button>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-full">
-                                                            <div>
-                                                                Lorem Ipsum
-                                                            </div>
-                                                        </PopoverContent>
-                                                    </Popover>
-                                                </TableCell>
-                                            </TableRow>
+                                            {caseData?.communications?.map((comm, index) => (
+                                                <TableRow key={index}>
+                                                    <TableCell>{comm.title}</TableCell>
+                                                    <TableCell>{formatDate(comm.date)}</TableCell>
+                                                    <TableCell>{comm.type}</TableCell>
+                                                    <TableCell>{comm.summary}</TableCell>
+                                                    <TableCell>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <Button variant="outline">See More</Button>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-full">
+                                                                <div>{comm.details}</div>
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )) || (
+                                                    <TableRow>
+                                                        <TableCell colSpan={5}>No communication logs available</TableCell>
+                                                    </TableRow>
+                                                )}
                                         </TableBody>
                                     </Table>
 
-                                    {/* Add Communication */}
-                                    <h1 className='text-lg md:text-xl lg:text-2xl py-3 font-bold'>
-                                        Add Communication Logs
-                                    </h1>
+                                    {/* Add Comm */}
+                                    <div className='py-5'>
+                                        <h1 className='text-lg md:text-xl lg:text-2xl pb-3 font-bold'>
+                                            Add Communication Logs
+                                        </h1>
+                                        <Form {...communicationForm}>
+                                            <form onSubmit={communicationForm.handleSubmit(onCommunicationSubmit)} className="space-y-8">
+                                                {/* Title */}
+                                                <FormField
+                                                    control={communicationForm.control}
+                                                    name="title"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Communication Title" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                    {/* Communication Form */}
-                                    <div>
-                                        <Card className='w-full'>
-                                            <CardContent className="grid gap-4">
-                                                <Form {...form}>
-                                                    <form onSubmit={commForm.handleSubmit(onCommSubmit)} className="space-y-8 pt-5">
-                                                        {/* Comm Title */}
-                                                        <FormField
-                                                            control={commForm.control}
-                                                            name="commtitle"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <Input placeholder="Communication Title" {...field} />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                {/* Date */}
+                                                <FormField
+                                                    control={communicationForm.control}
+                                                    name="date"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input type="date" placeholder="Communication Date" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                                        {/* Comm Type */}
-                                                        <FormField
-                                                            control={commForm.control}
-                                                            name="commtype"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <Input placeholder="Communication Type" {...field} />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                {/* Type */}
+                                                <FormField
+                                                    control={communicationForm.control}
+                                                    name="type"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Communication Type" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                                        {/* Date Paid */}
-                                                        <FormField
-                                                            control={commForm.control}
-                                                            name="commdate"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <Input type="date" placeholder="Communication Date" {...field} />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                {/* Summary */}
+                                                <FormField
+                                                    control={communicationForm.control}
+                                                    name="summary"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Summary" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                                        {/* Comm Summary */}
-                                                        <FormField
-                                                            control={commForm.control}
-                                                            name="commsummary"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <Input placeholder="Communication Summary" {...field} />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                {/* Details */}
+                                                <FormField
+                                                    control={communicationForm.control}
+                                                    name="details"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Details" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                                        <Button type="submit">Submit</Button>
-                                                    </form>
-                                                </Form>
-                                            </CardContent>
-                                        </Card>
+                                                <Button type="submit">Submit</Button>
+                                            </form>
+                                        </Form>
                                     </div>
                                 </CardContent>
                             </Card>
                         </TabsContent>
+
                         <TabsContent value="expenses">
                             <Card className='py-10'>
                                 <CardHeader>
-                                    <CardTitle className='text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>Case Expenses</CardTitle>
-
+                                    <CardTitle className='text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>
+                                        Case Expenses
+                                    </CardTitle>
                                     <CardDescription className='text-base md:text-lg lg:text-xl pb-3'>
                                         Case Expense History
                                     </CardDescription>
@@ -639,75 +698,87 @@ const page = ({ params }: { params: { viewcase: string } }) => {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            <TableRow>
-                                                <TableCell>File Filling</TableCell>
-                                                <TableCell>20/09/2024</TableCell>
-                                                <TableCell>20000</TableCell>
-                                                <TableCell>
-                                                    480000
-                                                </TableCell>
-                                            </TableRow>
+                                            {caseData?.expenses?.map((expense, index) => (
+                                                <TableRow key={index}>
+                                                    <TableCell>{expense.name}</TableCell>
+                                                    <TableCell>{formatDate(expense.date)}</TableCell>
+                                                    <TableCell>{expense.amount}</TableCell>
+                                                    <TableCell>{expense.balance}</TableCell>
+                                                </TableRow>
+                                            )) || (
+                                                    <TableRow>
+                                                        <TableCell colSpan={4}>No expenses recorded</TableCell>
+                                                    </TableRow>
+                                                )}
                                         </TableBody>
                                     </Table>
 
-                                    {/* Add Expense */}
-                                    <h1 className='text-lg md:text-xl lg:text-2xl py-3 font-bold'>
-                                        Add Expense
-                                    </h1>
+                                    {/* Add Expenses */}
+                                    <div className='py-5'>
+                                        <h1 className='text-lg md:text-xl lg:text-2xl pb-3 font-bold'>
+                                            Add Expenses
+                                        </h1>
+                                        <Form {...expenseForm}>
+                                            <form onSubmit={expenseForm.handleSubmit(onExpenseSubmit)} className="space-y-8">
+                                                {/* Name */}
+                                                <FormField
+                                                    control={expenseForm.control}
+                                                    name="name"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Expense Name" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                    {/* Expenses Form */}
-                                    <div>
-                                        <Card className='w-full'>
-                                            <CardContent className="grid gap-4">
-                                                <Form {...form}>
-                                                    <form onSubmit={expenseForm.handleSubmit(onExpenseSubmit)} className="space-y-8 pt-5">
-                                                        {/* Expense Name */}
-                                                        <FormField
-                                                            control={expenseForm.control}
-                                                            name="expensename"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <Input placeholder="Expense Name" {...field} />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                {/* Date */}
+                                                <FormField
+                                                    control={expenseForm.control}
+                                                    name="date"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input type="date" placeholder="Expense Date" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                                        {/* Amount */}
-                                                        <FormField
-                                                            control={expenseForm.control}
-                                                            name="amount"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <Input placeholder="Amount" {...field} />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                {/* Amount */}
+                                                <FormField
+                                                    control={expenseForm.control}
+                                                    name="amount"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Expense Amount" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                                        {/* Date Paid */}
-                                                        <FormField
-                                                            control={expenseForm.control}
-                                                            name="datePaid"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <Input type="date" placeholder="Date Paid" {...field} />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                {/* Balance */}
+                                                <FormField
+                                                    control={expenseForm.control}
+                                                    name="balance"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Remaining Balance" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
 
-                                                        <Button type="submit">Submit</Button>
-                                                    </form>
-                                                </Form>
-                                            </CardContent>
-                                        </Card>
+                                                <Button type="submit">Submit</Button>
+                                            </form>
+                                        </Form>
                                     </div>
                                 </CardContent>
                             </Card>

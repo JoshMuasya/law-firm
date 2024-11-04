@@ -26,11 +26,34 @@ export interface Cases {
     expenses?: {
         description: string;
         amount: number;
+        name: string;
+        date: string;
+        balance: string;
     }[];
 
     documents?: {
         file?: any;
         description: string;
+        title: string;
+        url: string;
+    }[];
+
+    events?: {
+        title?: any;
+        date: string;
+    }[];
+
+    milestones?: {
+        title?: any;
+        date: string;
+    }[];
+
+    communications?: {
+        title?: any;
+        date: string;
+        type: string;
+        summary: string;
+        details: string;
     }[];
 }
 
