@@ -23,19 +23,17 @@ export interface Cases {
     caseDescription?: string;
     caseSummary?: string;
 
+    expectedExpense?: string;
+
     expenses?: {
-        description: string;
-        amount: number;
+        amount: string;
         name: string;
         date: string;
-        balance: string;
     }[];
 
     documents?: {
         file?: any;
-        description: string;
-        title: string;
-        url: string;
+        desc: string;
     }[];
 
     events?: {

@@ -41,11 +41,12 @@ import { z } from "zod"
 import toast, { Toaster } from 'react-hot-toast';
 import { useRouter } from 'next/navigation'
 import { Cases } from '@/lib'
-import { doc, DocumentSnapshot, getDoc, Timestamp } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { addDoc, arrayUnion, collection, doc, DocumentSnapshot, getDoc, Timestamp, updateDoc } from 'firebase/firestore'
+import { db, storage } from '@/lib/firebase'
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 
-const error = () => toast('Failed to Add Client!!! Try Again!!!');
-const added = () => toast('Client Added Successfully!!!');
+const errorMsg = () => toast('Failed to Add!!! Try Again!!!');
+const added = () => toast('Added Successfully!!!');
 
 const eventSchema = z.object({
     title: z.string().min(2, { message: "Title must be at least 2 characters" }),
@@ -54,16 +55,14 @@ const eventSchema = z.object({
 });
 
 const documentSchema = z.object({
-    title: z.string().min(2, { message: "Title must be at least 2 characters" }),
-    type: z.string(),
-    url: z.string().optional()
+    desc: z.string(),
+    file: z.instanceof(File),
 });
 
 const expenseSchema = z.object({
     name: z.string().min(2, { message: "Name must be at least 2 characters" }),
     date: z.string(),
-    amount: z.string(),
-    balance: z.string()
+    amount: z.string()
 });
 
 const communicationSchema = z.object({
@@ -84,6 +83,8 @@ const page = ({ params }: { params: { viewcases: string } }) => {
     const [caseData, setCaseData] = useState<Cases | null>(null)
     const [loading, setLoading] = useState(true)
     const router = useRouter()
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    type Expense = NonNullable<Cases['expenses']>[number];
 
     const eventForm = useForm<z.infer<typeof eventSchema>>({
         resolver: zodResolver(eventSchema),
@@ -97,9 +98,7 @@ const page = ({ params }: { params: { viewcases: string } }) => {
     const documentForm = useForm<z.infer<typeof documentSchema>>({
         resolver: zodResolver(documentSchema),
         defaultValues: {
-            title: "",
-            type: "",
-            url: ""
+            desc: ""
         },
     });
 
@@ -108,8 +107,7 @@ const page = ({ params }: { params: { viewcases: string } }) => {
         defaultValues: {
             name: "",
             date: "",
-            amount: "",
-            balance: ""
+            amount: ""
         },
     });
 
@@ -166,6 +164,8 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                 if (casesSnapshot.exists()) {
                     const casesData = casesSnapshot.data() as Cases;
                     casesData.id = casesSnapshot.id;
+
+                    console.log(casesData.id)
                     setCaseData(casesData);
                 } else {
                     // router.push('/cases/view'); // Redirect to clients list if client not found
@@ -182,48 +182,176 @@ const page = ({ params }: { params: { viewcases: string } }) => {
 
     async function onEventSubmit(values: z.infer<typeof eventSchema>) {
         try {
-            // Perform your submit action here
-            console.log("Event Submitted", values);
-            // You can also make an API call, for example:
-            // await api.submitEvent(values);
+            setIsSubmitting(true)
+
+            const docRef = doc(db, 'Cases', params.viewcases);
+
+            const newEvent = {
+                ...values,
+                createdAt: new Date().toISOString()
+            };
+
+            await updateDoc(docRef, {
+                events: arrayUnion(newEvent)
+            });
+
+            if (caseData) {
+                setCaseData({
+                    ...caseData,
+                    events: [...(caseData.events || []), newEvent]
+                });
+            }
+
+            added()
+
         } catch (error) {
             console.error("Failed to submit event", error);
+
+            errorMsg()
+        } finally {
+            setIsSubmitting(false);
+            eventForm.reset();
         }
     }
 
     async function onDocumentSubmit(values: z.infer<typeof documentSchema>) {
+        const { desc, file } = values;
+
         try {
-            console.log("Document Submitted", values);
-            // e.g., await api.submitDocument(values);
+            setIsSubmitting(true)
+
+            const storageRef = ref(storage, `documents/${file.name}`);
+            const snapshot = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+
+            const docRef = doc(db, 'Cases', params.viewcases);
+
+            const newDocument = {
+                desc,
+                file: downloadURL
+            };
+
+            await updateDoc(docRef, {
+                documents: arrayUnion(newDocument)
+            });
+
+            if (caseData) {
+                setCaseData({
+                    ...caseData,
+                    documents: [...(caseData.documents || []), newDocument]
+                });
+            }
+
+            added()
+
         } catch (error) {
-            console.error("Failed to submit document", error);
+            console.error("Failed to submit Document", error);
+
+            errorMsg()
+        } finally {
+            setIsSubmitting(false);
+            documentForm.reset();
         }
     }
 
     async function onExpenseSubmit(values: z.infer<typeof expenseSchema>) {
         try {
-            console.log("Expense Submitted", values);
-            // e.g., await api.submitExpense(values);
+            setIsSubmitting(true);
+
+            const docRef = doc(db, 'Cases', params.viewcases);
+
+            const newExpense: Expense = {
+                name: values.name,
+                date: values.date,
+                amount: values.amount
+            };
+
+            await updateDoc(docRef, {
+                expenses: arrayUnion(newExpense)
+            });
+
+            // Update local state if needed
+            if (caseData) {
+                setCaseData({
+                    ...caseData,
+                    expenses: [...(caseData.expenses || []), newExpense]
+                });
+            }
+
+            added();
+            expenseForm.reset();
+
         } catch (error) {
-            console.error("Failed to submit expense", error);
+            console.error("Failed to submit Expense", error);
+            errorMsg();
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
     async function onCommunicationSubmit(values: z.infer<typeof communicationSchema>) {
         try {
-            console.log("Communication Submitted", values);
-            // e.g., await api.submitCommunication(values);
+            setIsSubmitting(true);
+
+            const docRef = doc(db, 'Cases', params.viewcases);
+
+            const newCommunication = {
+                ...values
+            };
+
+            await updateDoc(docRef, {
+                communications: arrayUnion(newCommunication)
+            });
+
+            // Update local state if needed
+            if (caseData) {
+                setCaseData({
+                    ...caseData,
+                    communications: [...(caseData.communications || []), newCommunication]
+                });
+            }
+
+            added();
+            communicationForm.reset();
+
         } catch (error) {
-            console.error("Failed to submit communication", error);
+            console.error("Failed to submit Communication", error);
+            errorMsg();
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
     async function onMilestoneSubmit(values: z.infer<typeof milestoneSchema>) {
         try {
-            console.log("Milestone Submitted", values);
-            // e.g., await api.submitMilestone(values);
+            setIsSubmitting(true);
+
+            const docRef = doc(db, 'Cases', params.viewcases);
+
+            const newMilestone = {
+                ...values
+            };
+
+            await updateDoc(docRef, {
+                milestones: arrayUnion(newMilestone)
+            });
+
+            // Update local state if needed
+            if (caseData) {
+                setCaseData({
+                    ...caseData,
+                    milestones: [...(caseData.milestones || []), newMilestone]
+                });
+            }
+
+            added();
+            milestoneForm.reset();
+
         } catch (error) {
-            console.error("Failed to submit milestone", error);
+            console.error("Failed to submit Milestone", error);
+            errorMsg();
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -469,17 +597,17 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>Document Title</TableHead>
+                                                <TableHead>Document Description</TableHead>
                                                 <TableHead>Action</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {caseData?.documents?.map((doc, index) => (
                                                 <TableRow key={index}>
-                                                    <TableCell>{doc.title}</TableCell>
+                                                    <TableCell>{doc.desc}</TableCell>
                                                     <TableCell>
                                                         <Button asChild>
-                                                            <Link href={doc.url || ''}>View</Link>
+                                                            <Link href={doc.file} target="_blank" rel="noopener noreferrer">View</Link>
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
@@ -498,42 +626,29 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                                         </h1>
                                         <Form {...documentForm}>
                                             <form onSubmit={documentForm.handleSubmit(onDocumentSubmit)} className="space-y-8">
-                                                {/* Title */}
+
+                                                {/* Description */}
                                                 <FormField
                                                     control={documentForm.control}
-                                                    name="title"
+                                                    name="desc"
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormControl>
-                                                                <Input placeholder="Document Title" {...field} />
+                                                                <Input placeholder="Document Description" {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
                                                     )}
                                                 />
 
-                                                {/* Type */}
+                                                {/* File Upload */}
                                                 <FormField
                                                     control={documentForm.control}
-                                                    name="type"
+                                                    name="file"
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormControl>
-                                                                <Input placeholder="Document Type" {...field} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-
-                                                {/* URL */}
-                                                <FormField
-                                                    control={documentForm.control}
-                                                    name="url"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormControl>
-                                                                <Input placeholder="Document URL" {...field} />
+                                                                <Input type="file" onChange={(e) => field.onChange(e.target.files?.[0] || null)} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -698,18 +813,30 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {caseData?.expenses?.map((expense, index) => (
-                                                <TableRow key={index}>
-                                                    <TableCell>{expense.name}</TableCell>
-                                                    <TableCell>{formatDate(expense.date)}</TableCell>
-                                                    <TableCell>{expense.amount}</TableCell>
-                                                    <TableCell>{expense.balance}</TableCell>
+                                            {caseData?.expenses && caseData.expenses.length > 0 ? (
+                                                (() => {
+                                                    // Initialize the running balance with the expected expense
+                                                    let runningBalance = parseFloat(caseData.expectedExpense ?? "0");
+
+                                                    return caseData.expenses.map((expense, index) => {
+                                                        // Calculate the balance after each expense deduction
+                                                        runningBalance -= parseFloat(expense.amount);
+
+                                                        return (
+                                                            <TableRow key={index}>
+                                                                <TableCell>{expense.name}</TableCell>
+                                                                <TableCell>{formatDate(expense.date)}</TableCell>
+                                                                <TableCell>{expense.amount}</TableCell>
+                                                                <TableCell>{runningBalance}</TableCell>
+                                                            </TableRow>
+                                                        );
+                                                    });
+                                                })()
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4}>No expenses recorded</TableCell>
                                                 </TableRow>
-                                            )) || (
-                                                    <TableRow>
-                                                        <TableCell colSpan={4}>No expenses recorded</TableCell>
-                                                    </TableRow>
-                                                )}
+                                            )}
                                         </TableBody>
                                     </Table>
 
@@ -762,20 +889,6 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                                                     )}
                                                 />
 
-                                                {/* Balance */}
-                                                <FormField
-                                                    control={expenseForm.control}
-                                                    name="balance"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormControl>
-                                                                <Input placeholder="Remaining Balance" {...field} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-
                                                 <Button type="submit">Submit</Button>
                                             </form>
                                         </Form>
@@ -786,6 +899,8 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                     </Tabs>
                 </CardContent>
             </Card>
+
+            <Toaster />
         </div>
     )
 }

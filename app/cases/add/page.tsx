@@ -74,6 +74,7 @@ const formSchema = z.object({
     clientName: z.string().min(1, { message: 'Client name is required' }),
     attorneyName: z.string().min(1, { message: 'Attorney name is required' }),
     courtName: z.string().min(1, { message: 'Court name is required' }),
+    expectedExpense: z.string(),
 
     practiceArea: z.enum(['civil', 'criminal', 'corporate', 'family', 'property'], {
         required_error: 'Practice area is required'
@@ -127,6 +128,7 @@ const page = () => {
             caseDescription: '',
             caseSummary: '',
             instructionsDate: '',
+            expectedExpense: '',
         },
     })
 
@@ -142,27 +144,27 @@ const page = () => {
             name: "documents"
         });
 
-        const uploadDocuments = async (documents: any[]) => {
-            if (!documents || documents.length === 0) return [];
-            
-            const storage = getStorage();
-            const uploadPromises = documents.map(async (doc) => {
-                if (!doc.file) return null;
-    
-                const fileRef = ref(storage, `cases/${form.getValues().caseNumber}/documents/${doc.file.name}`);
-                await uploadBytes(fileRef, doc.file);
-                const downloadURL = await getDownloadURL(fileRef);
-    
-                return {
-                    fileName: doc.file.name,
-                    fileUrl: downloadURL,
-                    description: doc.description,
-                };
-            });
-    
-            const results = await Promise.all(uploadPromises);
-            return results.filter(result => result !== null);
-        };
+    const uploadDocuments = async (documents: any[]) => {
+        if (!documents || documents.length === 0) return [];
+
+        const storage = getStorage();
+        const uploadPromises = documents.map(async (doc) => {
+            if (!doc.file) return null;
+
+            const fileRef = ref(storage, `cases/${form.getValues().caseNumber}/documents/${doc.file.name}`);
+            await uploadBytes(fileRef, doc.file);
+            const downloadURL = await getDownloadURL(fileRef);
+
+            return {
+                fileName: doc.file.name,
+                fileUrl: downloadURL,
+                description: doc.description,
+            };
+        });
+
+        const results = await Promise.all(uploadPromises);
+        return results.filter(result => result !== null);
+    };
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsSubmitting(true);
@@ -182,7 +184,7 @@ const page = () => {
             added();
             form.reset();
             router.push('/cases/view');
-            
+
         } catch (error) {
             errorCase();
             console.error("Error adding case:", error);
@@ -329,6 +331,20 @@ const page = () => {
                                             <FormLabel>Instructions Date</FormLabel>
                                             <FormControl>
                                                 <Input type="date" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="expectedExpense"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Expected Expense</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
