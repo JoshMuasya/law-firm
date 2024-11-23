@@ -191,7 +191,7 @@ const page = () => {
               </PopoverContent>
             </Popover>
             <Button asChild>
-              <Link href="/clients/add">Add Client</Link>
+              <Link href="/cases/add">Add Case</Link>
             </Button>
           </div>
         </CardContent>

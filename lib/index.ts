@@ -1,3 +1,5 @@
+import { UseFormReturn } from "react-hook-form";
+
 export interface Client {
     id: string;
     fullname: string;
@@ -6,6 +8,29 @@ export interface Client {
     address: string;
     createdAt: string;
     imageUrl: string;
+}
+
+export interface ClientFinances {
+    id: string;
+    fullname: string;
+    address: string;
+    email: string;
+    phonenumber: string;
+    amountPaid: number;
+    createdAt: Date;
+}
+
+export interface ClientPaymentDialogProps {
+    clients: Client[];
+    form: UseFormReturn<FormValues>;
+}
+
+export interface FormValues {
+    fullname: string;
+    address: string;
+    email: string;
+    phonenumber: string;
+    amountPaid: number;
 }
 
 export interface Cases {
@@ -79,3 +104,12 @@ export interface DocumentInterface {
     file: File | undefined;
     description: string;
 }
+
+type PaymentMethod = 'Cash' | 'Mobile Money' | 'Bank Transfer' | 'Cheque';
+
+export interface ReceiptType {
+    id: number;
+    client: string;
+    amount: number;
+    method: PaymentMethod;
+  }
