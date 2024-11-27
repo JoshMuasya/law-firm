@@ -6,18 +6,23 @@ export interface Client {
     email: string;
     phonenumber: string;
     address: string;
-    createdAt: string;
+    createdAt: Date;
     imageUrl: string;
 }
 
 export interface ClientFinances {
     id: string;
     fullname: string;
-    address: string;
     email: string;
     phonenumber: string;
+    address: string;
     amountPaid: number;
+    pending: number;
     createdAt: Date;
+    paymentHistory: Array<{
+        amountPaid: number;
+        createdAt: Date;
+    }>;
 }
 
 export interface ClientPaymentDialogProps {
@@ -51,6 +56,7 @@ export interface Cases {
     expectedExpense?: string;
 
     expenses?: {
+        id: string;
         amount: string;
         name: string;
         date: string;
@@ -112,4 +118,4 @@ export interface ReceiptType {
     client: string;
     amount: number;
     method: PaymentMethod;
-  }
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     Card,
     CardContent,
@@ -56,6 +56,9 @@ import { Search, Plus, Filter } from 'lucide-react';
 import { addDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Cases, Client, ClientFinances, FormValues, ReceiptType } from '@/lib';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
     fullname: z.string().min(3, { message: "Full name must be at least 3 characters long" }),
@@ -76,10 +79,6 @@ const added = () => toast('Payment Added Successfully!!!');
 
 const page = () => {
     const [selectedPeriod, setSelectedPeriod] = useState('month');
-    const [selectedCase, setSelectedCase] = useState('');
-    const [paymentAmount, setPaymentAmount] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('');
-    const [selectedClient, setSelectedClient] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loading, setLoading] = useState(true)
     const [clients, setClients] = useState<Client[]>([])
@@ -88,7 +87,11 @@ const page = () => {
     const [showDropdown, setShowDropdown] = useState(false);
     const [cases, setCases] = useState<Cases[]>([])
     const [clientPayments, setClientPayments] = useState<ClientFinances[]>([])
-    const validMethods = ['Cash', 'Mobile Money', 'Bank Transfer', 'Cheque'];
+    const [selectedClientForHistory, setSelectedClientForHistory] = useState<ClientFinances | null>(null);
+    const [searchExpensesTerm, setSearchExpensesTerm] = useState('');
+    const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
+    const [selectedCase, setSelectedCase] = useState<Cases | null>(null);
+
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -117,7 +120,20 @@ const page = () => {
     };
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values)
+        const selectedClient = processedClients.find(
+            client => client.fullname === values.fullname
+        );
+
+        if (!selectedClient || selectedClient.pending <= 0) {
+            toast.error("Cannot record payment for a client with zero balance");
+            return;
+        }
+
+        if (values.amountPaid > selectedClient.pending) {
+            toast.error(`Payment amount cannot exceed pending balance of ${formatCurrency(selectedClient.pending)}`);
+            return;
+        }
+
         try {
             setIsSubmitting(true)
 
@@ -175,7 +191,7 @@ const page = () => {
         );
     };
 
-    const generateInvoice = (caseData: { totalPaid?: number; pending: any; lastPaymentDate?: Date; paymentHistory?: ClientFinances[]; id: any; fullname?: string; email?: string; phonenumber?: string; address?: string; createdAt?: string; imageUrl?: string; client?: any; }) => {
+    const generateInvoice = (caseData: { totalPaid?: number; pending: any; lastPaymentDate?: Date; paymentHistory?: ClientFinances[]; id: any; fullname?: string; email?: string; phonenumber?: string; address?: string; createdAt?: Date; imageUrl?: string; client?: any; }) => {
         return (
             <div className="p-8 max-w-2xl mx-auto">
                 <div className="text-center mb-6">
@@ -305,8 +321,6 @@ const page = () => {
         const totalExpenses = cases
             .filter(caseItem => caseItem.clientName === clientName)
             .reduce((sum, caseItem) => sum + (parseInt(caseItem.expectedExpense ?? "0") || 0), 0);
-
-        console.log("Client Expenses:", cases.filter(caseItem => caseItem.clientName === clientName).reduce((sum, caseItem) => sum + (parseInt(caseItem.expectedExpense ?? "0") || 0), 0))
         return totalExpenses
     };
 
@@ -329,17 +343,18 @@ const page = () => {
 
     // Process data for each client
     const processedClients = clients.map(client => {
-        const totalPaid = getClientTotalPayments(client.fullname);
+        const amountPaid = getClientTotalPayments(client.fullname);
         const totalExpenses = getClientTotalExpenses(client.fullname);
-        const pending = (totalExpenses * 1.5) - totalPaid;
+        const pending = (totalExpenses * 1.5) - amountPaid;
         const lastPaymentDate = getLastPaymentDate(client.fullname);
         const clientPaymentHistory = clientPayments
             .filter(payment => payment.fullname === client.fullname)
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+
         return {
             ...client,
-            totalPaid,
+            amountPaid,
             pending,
             lastPaymentDate,
             paymentHistory: clientPaymentHistory
@@ -368,6 +383,19 @@ const page = () => {
 
         setSearchTerm('');
         setShowDropdown(false);
+    };
+
+    // Search Cases in Expenses Tracker
+    const filteredCases = useMemo(() =>
+        cases.filter(c =>
+            c.caseName.toLowerCase().includes(searchTerm.toLowerCase())
+        ),
+        [cases, searchTerm]
+    );
+
+    // Calculate Total Expenses 
+    const calculateTotalExpenses = (caseExpenses: any[]) => {
+        return caseExpenses.reduce((total: number, expense: { amount: string; }) => total + parseFloat(expense.amount), 0);
     };
 
     return (
@@ -417,35 +445,76 @@ const page = () => {
             {/* Case Expenses Tracking */}
             <Card className="mb-8">
                 <CardHeader>
-                    <CardTitle className="text-xl">Case Expenses Tracker</CardTitle>
+                    <CardTitle className="text-xl flex justify-between items-center">
+                        Case Expenses Tracker
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                <Input
+                                    placeholder="Search cases..."
+                                    className="pl-8 w-[200px]"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex gap-4 mb-4">
-                        <Select onValueChange={setSelectedCase}>
-                            <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="Select Case" />
-                            </SelectTrigger>
-                            <SelectContent>
-
-                            </SelectContent>
-                        </Select>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Expense
-                        </Button>
-                    </div>
-
-                    {/* Custom table using Tailwind */}
                     <div className="w-full">
                         <div className="bg-gray-100 p-4 grid grid-cols-5 gap-4 font-medium">
                             <div>Case</div>
                             <div>Expenses</div>
                             <div>Expense Cap</div>
-                            <div>Profit</div>
+                            <div>Balance</div>
                             <div>Actions</div>
                         </div>
                         <div className="divide-y">
-
+                            {filteredCases.map(currentCase => (
+                                <div key={currentCase.id} className="grid grid-cols-5 gap-4 p-4 items-center">
+                                    <div>{currentCase.caseName}</div>
+                                    <div>
+                                        {currentCase?.expenses?.map(expense => (
+                                            <div
+                                                key={expense.id}
+                                                className="border rounded-lg shadow-md p-4 my-3 bg-white"
+                                            >
+                                                <h3 className="font-semibold text-lg text-gray-800">{expense.name}</h3>
+                                                <p className="text-gray-600 mt-2">Ksh. {expense.amount}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div>Ksh. {currentCase.expectedExpense}</div>
+                                    <div className={`font-bold ${calculateTotalExpenses(currentCase?.expenses || []) > (currentCase?.expectedExpense || 0)
+                                        ? 'text-red-500'
+                                        : 'text-green-500'
+                                        }`}>
+                                        Ksh. {(Number(currentCase?.expectedExpense || 0) - Number(calculateTotalExpenses(currentCase?.expenses || []))).toFixed(2)}
+                                    </div>
+                                    <div>
+                                        <Dialog
+                                            open={isAddExpenseDialogOpen && selectedCase?.id === currentCase.id}
+                                            onOpenChange={setIsAddExpenseDialogOpen}
+                                        >
+                                            <DialogTrigger asChild>
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => setSelectedCase(currentCase)}
+                                                >
+                                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                                    Add Expense
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Add Expense for {currentCase.caseName}</DialogTitle>
+                                                </DialogHeader>
+                                                {/* Form to Add Expenses */}
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </CardContent>
@@ -599,7 +668,7 @@ const page = () => {
                                 <div key={client.id} className="grid grid-cols-6 gap-4 p-4 items-center">
                                     <div className="font-medium">{client.fullname}</div>
                                     <div className="text-green-600">
-                                        {formatCurrency(client.totalPaid)}
+                                        {formatCurrency(client.amountPaid)}
                                     </div>
                                     <div className="text-red-600">
                                         {formatCurrency(client.pending)}
@@ -610,9 +679,42 @@ const page = () => {
                                             : 'No payments'}
                                     </div>
                                     <div>
-                                        <button className="text-blue-600 hover:text-blue-800">
+                                        <button
+                                            className="text-blue-600 hover:text-blue-800"
+                                            onClick={() => setSelectedClientForHistory(client)}
+                                        >
                                             View History ({client.paymentHistory.length})
                                         </button>
+
+                                        {/* Payment History Dialog */}
+                                        <Dialog open={selectedClientForHistory !== null} onOpenChange={() => setSelectedClientForHistory(null)}>
+                                            <DialogContent className="max-w-2xl">
+                                                <DialogHeader>
+                                                    <DialogTitle>Payment History for {selectedClientForHistory?.fullname}</DialogTitle>
+                                                </DialogHeader>
+
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Date</TableHead>
+                                                            <TableHead>Amount</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {selectedClientForHistory?.paymentHistory.map((payment, index) => (
+                                                            <TableRow key={index}>
+                                                                <TableCell>
+                                                                    {format(new Date(payment.createdAt), 'MMM dd, yyyy')}
+                                                                </TableCell>
+                                                                <TableCell className="text-green-600">
+                                                                    {formatCurrency(payment.amountPaid)}
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </DialogContent>
+                                        </Dialog>
                                     </div>
                                     <div className='flex flex-row justify-around align-middle items-center'>
                                         <Dialog>
@@ -635,7 +737,7 @@ const page = () => {
                                                 {generateReceipt({
                                                     id: 1,
                                                     client: client.fullname,
-                                                    amount: client.totalPaid,
+                                                    amount: client.amountPaid,
                                                     method: "Cash"
                                                 })}
                                                 <div className="flex justify-end gap-4">
