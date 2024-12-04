@@ -84,6 +84,12 @@ export interface Cases {
         summary: string;
         details: string;
     }[];
+} 
+
+export interface ExpensesInterface{
+    amount: number;
+    desc: string;
+    id: string;
 }
 
 export interface FormDataInterface {
@@ -101,11 +107,6 @@ export interface FormDataInterface {
     documents: DocumentInterface[];
 }
 
-export interface Expense {
-    description: string;
-    amount: string | number;
-}
-
 export interface DocumentInterface {
     file: File | undefined;
     description: string;
@@ -118,4 +119,11 @@ export interface ReceiptType {
     client: string;
     amount: number;
     method: PaymentMethod;
+}
+
+export interface Expense {
+    id: string;
+    desc: string;
+    expenseAmount: number;
+    createdAt: Date;
 }

@@ -263,7 +263,7 @@ const page = ({ params }: { params: { viewcases: string } }) => {
             const newExpense: Expense = {
                 name: values.name,
                 date: values.date,
-                amount: values.amount
+                amount: values.amount,
             };
 
             await updateDoc(docRef, {

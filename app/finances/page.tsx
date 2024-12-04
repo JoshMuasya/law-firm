@@ -23,7 +23,9 @@ import {
     ClipboardList,
     PlusCircle,
     X,
-    Printer
+    Printer,
+    CreditCard,
+    BarChart
 } from "lucide-react";
 import {
     Dialog,
@@ -55,10 +57,11 @@ import { z } from "zod"
 import { Search, Plus, Filter } from 'lucide-react';
 import { addDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Cases, Client, ClientFinances, FormValues, ReceiptType } from '@/lib';
+import { Cases, Client, ClientFinances, Expense } from '@/lib';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const formSchema = z.object({
     fullname: z.string().min(3, { message: "Full name must be at least 3 characters long" }),
@@ -69,6 +72,15 @@ const formSchema = z.object({
         .regex(/^\d+$/, { message: "Phone number should contain only digits" }),
     address: z.string().min(5, { message: "Address must be at least 5 characters long" }),
     amountPaid: z
+        .string()
+        .regex(/^\d+$/, { message: "Amount paid must be a valid number" })
+        .transform((value) => parseFloat(value)),
+});
+
+
+const formExpensesSchema = z.object({
+    desc: z.string().min(3, { message: "Description must be at least 3 characters long" }),
+    expenseAmount: z
         .string()
         .regex(/^\d+$/, { message: "Amount paid must be a valid number" })
         .transform((value) => parseFloat(value)),
@@ -91,6 +103,13 @@ const page = () => {
     const [searchExpensesTerm, setSearchExpensesTerm] = useState('');
     const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
     const [selectedCase, setSelectedCase] = useState<Cases | null>(null);
+    const [selectedStatementPeriod, setSelectedStatementPeriod] = useState('month');
+    const [selectedStatement, setSelectedStatement] = useState('profitLoss');
+    const [totalRevenue, setTotalRevenue] = useState(0);
+    const [totalExpenses, setTotalExpenses] = useState(0);
+    const [profitLoss, setProfitLoss] = useState(0);
+    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [totalPaid, setTotalPaid] = useState(0)
 
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -101,6 +120,14 @@ const page = () => {
             phonenumber: "",
             address: "",
             amountPaid: 0,
+        },
+    });
+
+    const expensesForm = useForm<z.infer<typeof formExpensesSchema>>({
+        resolver: zodResolver(formExpensesSchema),
+        defaultValues: {
+            desc: "",
+            expenseAmount: 0,
         },
     });
 
@@ -153,6 +180,25 @@ const page = () => {
         } finally {
             setIsSubmitting(false);
             form.reset()
+        }
+    }
+
+    async function onExpensesSubmit(values: z.infer<typeof formExpensesSchema>) {
+        try {
+            setIsSubmitting(true)
+
+            const docRef = await addDoc(collection(db, "Expenses"), {
+                ...values,
+                createdAt: new Date().toISOString()
+            });
+
+            added();
+        } catch (error) {
+            console.log("Error: ", error)
+            errorMsg()
+        } finally {
+            setIsSubmitting(false);
+            expensesForm.reset()
         }
     }
 
@@ -303,10 +349,28 @@ const page = () => {
         }
     }
 
+    const fetchExpenses = async () => {
+        try {
+            const expensesCollection = collection(db, 'Expenses')
+            const expenseSnapshot = await getDocs(expensesCollection)
+            const expenseList = expenseSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data() as Omit<Expense, 'id'>
+            }))
+            setExpenses(expenseList)
+            setLoading(false)
+        } catch (error) {
+            console.error("Error fetching Payments: ", error)
+            toast.error("Failed to load Payments")
+            setLoading(false)
+        }
+    }
+
     useEffect(() => {
         fetchClients()
         fetchCases()
         fetchClientPayments()
+        fetchExpenses()
     }, [])
 
     // Helper function to get total payments for a client
@@ -344,8 +408,8 @@ const page = () => {
     // Process data for each client
     const processedClients = clients.map(client => {
         const amountPaid = getClientTotalPayments(client.fullname);
-        const totalExpenses = getClientTotalExpenses(client.fullname);
-        const pending = (totalExpenses * 1.5) - amountPaid;
+        const totalExpenses = getClientTotalExpenses(client.fullname) * 2;
+        const pending = (totalExpenses) - amountPaid;
         const lastPaymentDate = getLastPaymentDate(client.fullname);
         const clientPaymentHistory = clientPayments
             .filter(payment => payment.fullname === client.fullname)
@@ -398,6 +462,129 @@ const page = () => {
         return caseExpenses.reduce((total: number, expense: { amount: string; }) => total + parseFloat(expense.amount), 0);
     };
 
+    const renderProfitLossStatement = () => (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                    <BarChart className="mr-2 h-5 w-5" />
+                    Profit & Loss Statement
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-2">
+                    <div className="flex justify-between">
+                        <span>Total Revenue</span>
+                        <span className="font-semibold text-green-600">
+                            {formatCurrency(totalRevenue)}
+                        </span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span>Total Expenses</span>
+                        <span className="font-semibold text-red-600">
+                            {formatCurrency(totalExpenses)}
+                        </span>
+                    </div>
+                    <div className="flex justify-between font-bold border-t pt-2">
+                        <span>Net Profit</span>
+                        <span className={`${totalRevenue - totalExpenses >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {formatCurrency(totalRevenue - totalExpenses)}
+                        </span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    const renderPendingPaymentsStatement = () => (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                    <FileText className="mr-2 h-5 w-5" />
+                    Pending Payments
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-2">
+                    <div className="flex justify-between mb-2">
+                        <span className="font-semibold">Total Pending</span>
+                        <span className="font-bold text-orange-600">
+                            {formatCurrency(totalRevenue - totalPaid)}
+                        </span>
+                    </div>
+
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    const renderPaidAmountsStatement = () => (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                    <DollarSign className="mr-2 h-5 w-5" />
+                    Total Paid Amounts
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-2">
+                    <div className="flex justify-between mb-2">
+                        <span className="font-semibold">Total Paid</span>
+                        <span className="font-bold text-green-700">
+                            {formatCurrency(totalPaid)}
+                        </span>
+                    </div>
+
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    const renderExpensesStatement = () => (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    Expense Breakdown
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-2">
+                    <div className="flex justify-between mb-2">
+                        <span className="font-semibold">Total Expenses</span>
+                        <span className="font-bold text-red-600">
+                            {formatCurrency(totalExpenses)}
+                        </span>
+                    </div>
+
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    // Get total Revenue
+    const calculateTotalRevenue = (cases: Cases[]) => {
+        return cases.reduce((sum, cases) => sum + parseInt((cases.expectedExpense ?? "0")) * 2, 0)
+    }
+
+    // Get total Expenses
+    const calculateTotalExpense = (expenses: Expense[]) => {
+        const totalExpenses = expenses
+            .reduce((sum, expense) => sum + (Number(expense.expenseAmount) || 0), 0)
+        return totalExpenses
+    }
+
+    const calculateTotalPaid = (payments: ClientFinances[]) => {
+        const totalPaid = payments
+            .reduce((sum, payment) => sum + (Number(payment.amountPaid) || 0), 0)
+        return totalPaid
+    }
+
+    useEffect(() => {
+        setTotalRevenue(calculateTotalRevenue(cases))
+        setTotalExpenses(calculateTotalExpense(expenses))
+        setTotalPaid(calculateTotalPaid(clientPayments))
+    }, [fetchCases])
+
     return (
         <div className="p-6">
             <div className='py-5 font-bold flex flex-col justify-center align-middle items-center text-4xl'>
@@ -410,7 +597,7 @@ const page = () => {
                         <CardTitle className="text-lg font-medium">Total Revenue</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">10000000</p>
+                        <p className="text-2xl font-bold">{formatCurrency(totalRevenue)}</p>
                     </CardContent>
                 </Card>
 
@@ -419,7 +606,7 @@ const page = () => {
                         <CardTitle className="text-lg font-medium">Total Expenses</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">50000</p>
+                        <p className="text-2xl font-bold">{formatCurrency(totalExpenses)}</p>
                     </CardContent>
                 </Card>
 
@@ -428,7 +615,7 @@ const page = () => {
                         <CardTitle className="text-lg font-medium">Total Profit</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold text-green-600">20000</p>
+                        <p className="text-2xl font-bold text-green-600">{formatCurrency(totalRevenue - totalExpenses)}</p>
                     </CardContent>
                 </Card>
 
@@ -437,7 +624,7 @@ const page = () => {
                         <CardTitle className="text-lg font-medium">Pending Payments</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold text-yellow-600">15000</p>
+                        <p className="text-2xl font-bold text-yellow-600">{formatCurrency(totalRevenue - totalPaid)}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -467,7 +654,6 @@ const page = () => {
                             <div>Expenses</div>
                             <div>Expense Cap</div>
                             <div>Balance</div>
-                            <div>Actions</div>
                         </div>
                         <div className="divide-y">
                             {filteredCases.map(currentCase => (
@@ -480,18 +666,18 @@ const page = () => {
                                                 className="border rounded-lg shadow-md p-4 my-3 bg-white"
                                             >
                                                 <h3 className="font-semibold text-lg text-gray-800">{expense.name}</h3>
-                                                <p className="text-gray-600 mt-2">Ksh. {expense.amount}</p>
+                                                <p className="text-gray-600 mt-2">{formatCurrency(parseInt(expense.amount))}</p>
                                             </div>
                                         ))}
                                     </div>
-                                    <div>Ksh. {currentCase.expectedExpense}</div>
+                                    <div>{formatCurrency(parseInt(currentCase?.expectedExpense || "0"))}</div>
                                     <div className={`font-bold ${calculateTotalExpenses(currentCase?.expenses || []) > (currentCase?.expectedExpense || 0)
                                         ? 'text-red-500'
                                         : 'text-green-500'
                                         }`}>
-                                        Ksh. {(Number(currentCase?.expectedExpense || 0) - Number(calculateTotalExpenses(currentCase?.expenses || []))).toFixed(2)}
+                                        {formatCurrency((Number(currentCase?.expectedExpense || 0) - Number(calculateTotalExpenses(currentCase?.expenses || []))))}
                                     </div>
-                                    <div>
+                                    {/* <div>
                                         <Dialog
                                             open={isAddExpenseDialogOpen && selectedCase?.id === currentCase.id}
                                             onOpenChange={setIsAddExpenseDialogOpen}
@@ -509,10 +695,43 @@ const page = () => {
                                                 <DialogHeader>
                                                     <DialogTitle>Add Expense for {currentCase.caseName}</DialogTitle>
                                                 </DialogHeader>
-                                                {/* Form to Add Expenses */}
+                                                {/* Form to Add Expenses
+                                                <Form {...expensesForm}>
+                                                    <form onSubmit={expensesForm.handleSubmit(onExpensesSubmit)} className="space-y-8">
+                                                        {/* Desc 
+                                                        <FormField
+                                                            control={expensesForm.control}
+                                                            name="desc"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input placeholder="Description" {...field} />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+
+                                                        {/* Amount
+                                                        <FormField
+                                                            control={expensesForm.control}
+                                                            name="amount"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input placeholder="Amount" type="number" {...field} />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+
+                                                        <Button type="submit">Submit</Button>
+                                                    </form>
+                                                </Form>
                                             </DialogContent>
                                         </Dialog>
-                                    </div>
+                                    </div> */}
                                 </div>
                             ))}
                         </div>
@@ -784,8 +1003,11 @@ const page = () => {
                 </CardHeader>
                 <CardContent>
                     <div className="flex gap-4 mb-4">
-                        <Select defaultValue={selectedPeriod} onValueChange={setSelectedPeriod}>
-                            <SelectTrigger className="w-[200px]">
+                        <Select
+                            defaultValue={selectedPeriod}
+                            onValueChange={setSelectedPeriod}
+                        >
+                            <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Select Period" />
                             </SelectTrigger>
                             <SelectContent>
@@ -795,51 +1017,90 @@ const page = () => {
                                 <SelectItem value="custom">Custom Range</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button
-                        // onClick={() => generateStatement(selectedPeriod)}
-                        >
+
+                        <Button>
                             <ClipboardList className="mr-2 h-4 w-4" />
                             Generate Statement
                         </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Profit & Loss</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <span>Total Revenue</span>
-                                        <span>10000000</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Total Expenses</span>
-                                        <span>20000</span>
-                                    </div>
-                                    <div className="flex justify-between font-bold">
-                                        <span>Net Profit</span>
-                                        <span>20000</span>
-                                    </div>
+                    <Tabs defaultValue="profitLoss" className="w-full">
+                        <TabsList className="grid w-full grid-cols-4">
+                            <TabsTrigger value="profitLoss">
+                                <BarChart className="mr-2 h-4 w-4" />
+                                Profit & Loss
+                            </TabsTrigger>
+                            <TabsTrigger value="pendingPayments">
+                                <FileText className="mr-2 h-4 w-4" />
+                                Pending Payments
+                            </TabsTrigger>
+                            <TabsTrigger value="paidAmounts">
+                                <DollarSign className="mr-2 h-4 w-4" />
+                                Paid Amounts
+                            </TabsTrigger>
+                            <TabsTrigger value="expenses">
+                                <CreditCard className="mr-2 h-4 w-4" />
+                                Expenses
+                            </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="profitLoss">
+                            {renderProfitLossStatement()}
+                        </TabsContent>
+                        <TabsContent value="pendingPayments">
+                            {renderPendingPaymentsStatement()}
+                        </TabsContent>
+                        <TabsContent value="paidAmounts">
+                            {renderPaidAmountsStatement()}
+                        </TabsContent>
+                        <TabsContent value="expenses">
+                            <div>
+                                <div>
+                                    {renderExpensesStatement()}
                                 </div>
-                            </CardContent>
-                        </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Expense Breakdown</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-2">
+                                <div className='mt-4'>
+                                    <CardTitle className="text-lg flex items-center">
+                                        Add Expenses
+                                    </CardTitle>
+                                    <Form {...expensesForm}>
+                                        <form onSubmit={expensesForm.handleSubmit(onExpensesSubmit)} className="space-y-8">
+                                            {/* Desc */}
+                                            <FormField
+                                                control={expensesForm.control}
+                                                name="desc"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormControl>
+                                                            <Input placeholder="Description" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
 
+                                            {/* Amount */}
+                                            <FormField
+                                                control={expensesForm.control}
+                                                name="expenseAmount"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormControl>
+                                                            <Input placeholder="Amount" type="number" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <Button type="submit">Submit</Button>
+                                        </form>
+                                    </Form>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                            </div>
+                        </TabsContent>
+                    </Tabs>
                 </CardContent>
             </Card>
-
             <Toaster />
         </div>
     );
