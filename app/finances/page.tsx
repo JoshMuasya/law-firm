@@ -110,6 +110,8 @@ const page = () => {
     const [profitLoss, setProfitLoss] = useState(0);
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [totalPaid, setTotalPaid] = useState(0)
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -462,82 +464,72 @@ const page = () => {
         return caseExpenses.reduce((total: number, expense: { amount: string; }) => total + parseFloat(expense.amount), 0);
     };
 
-    const renderProfitLossStatement = () => (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                    <BarChart className="mr-2 h-5 w-5" />
-                    Profit & Loss Statement
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    <div className="flex justify-between">
-                        <span>Total Revenue</span>
-                        <span className="font-semibold text-green-600">
-                            {formatCurrency(totalRevenue)}
-                        </span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span>Total Expenses</span>
-                        <span className="font-semibold text-red-600">
-                            {formatCurrency(totalExpenses)}
-                        </span>
-                    </div>
-                    <div className="flex justify-between font-bold border-t pt-2">
-                        <span>Net Profit</span>
-                        <span className={`${totalRevenue - totalExpenses >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {formatCurrency(totalRevenue - totalExpenses)}
-                        </span>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-    );
+    const renderProfitLossStatement = () => {
+        const filterDataByPeriod = () => {
+            const filterDate = (date: string | number | Date) => {
+                const checkDate = new Date(date);
 
-    const renderPendingPaymentsStatement = () => (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                    <FileText className="mr-2 h-5 w-5" />
-                    Pending Payments
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    <div className="flex justify-between mb-2">
-                        <span className="font-semibold">Total Pending</span>
-                        <span className="font-bold text-orange-600">
-                            {formatCurrency(totalRevenue - totalPaid)}
-                        </span>
+                switch (selectedPeriod) {
+                    case 'month':
+                        return checkDate.getMonth() === new Date().getMonth();
+                    case 'quarter':
+                        const currentQuarter = Math.floor(new Date().getMonth() / 3);
+                        return Math.floor(checkDate.getMonth() / 3) === currentQuarter;
+                    case 'year':
+                        return checkDate.getFullYear() === new Date().getFullYear();
+                    case 'custom':
+                        return checkDate >= new Date(startDate) && checkDate <= new Date(endDate);
+                    default:
+                        return true;
+                }
+            };
+
+            const filteredExpenses = expenses.filter(exp => filterDate(exp.createdAt));
+            const filteredPayments = clientPayments.filter(payment => filterDate(payment.createdAt));
+            const filteredCases = cases.filter(caseItem => filterDate(caseItem.instructionsDate));
+
+            return {
+                periodRevenue: calculateTotalRevenue(filteredCases),
+                periodExpenses: calculateTotalExpense(filteredExpenses),
+                periodPayments: calculateTotalPaid(filteredPayments)
+            };
+        };
+
+        const { periodRevenue, periodExpenses } = filterDataByPeriod();
+
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                        <BarChart className="mr-2 h-5 w-5" />
+                        Profit & Loss Statement
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        <div className="flex justify-between">
+                            <span>Total Revenue</span>
+                            <span className="font-semibold text-green-600">
+                                {formatCurrency(periodRevenue)}
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Total Expenses</span>
+                            <span className="font-semibold text-red-600">
+                                {formatCurrency(periodExpenses)}
+                            </span>
+                        </div>
+                        <div className="flex justify-between font-bold border-t pt-2">
+                            <span>Net Profit</span>
+                            <span className={`${periodRevenue - periodExpenses >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {formatCurrency(periodRevenue - periodExpenses)}
+                            </span>
+                        </div>
                     </div>
-
-                </div>
-            </CardContent>
-        </Card>
-    );
-
-    const renderPaidAmountsStatement = () => (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                    <DollarSign className="mr-2 h-5 w-5" />
-                    Total Paid Amounts
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    <div className="flex justify-between mb-2">
-                        <span className="font-semibold">Total Paid</span>
-                        <span className="font-bold text-green-700">
-                            {formatCurrency(totalPaid)}
-                        </span>
-                    </div>
-
-                </div>
-            </CardContent>
-        </Card>
-    );
+                </CardContent>
+            </Card>
+        );
+    };
 
     const renderExpensesStatement = () => (
         <Card>
@@ -584,6 +576,10 @@ const page = () => {
         setTotalExpenses(calculateTotalExpense(expenses))
         setTotalPaid(calculateTotalPaid(clientPayments))
     }, [fetchCases])
+
+    const generateStatement = () => {
+        console.log("Clicked")        
+    }
 
     return (
         <div className="p-6">
@@ -1018,7 +1014,29 @@ const page = () => {
                             </SelectContent>
                         </Select>
 
-                        <Button>
+                        {selectedPeriod === "custom" && (
+                            <div className="flex gap-4 items-center">
+                                <Input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    placeholder="Start Date"
+                                    className="w-[150px]"
+                                />
+                                <span className="text-gray-500">to</span>
+                                <Input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    placeholder="End Date"
+                                    className="w-[150px]"
+                                />
+                            </div>
+                        )}
+
+                        <Button
+                            onClick={generateStatement}
+                        >
                             <ClipboardList className="mr-2 h-4 w-4" />
                             Generate Statement
                         </Button>
@@ -1030,14 +1048,6 @@ const page = () => {
                                 <BarChart className="mr-2 h-4 w-4" />
                                 Profit & Loss
                             </TabsTrigger>
-                            <TabsTrigger value="pendingPayments">
-                                <FileText className="mr-2 h-4 w-4" />
-                                Pending Payments
-                            </TabsTrigger>
-                            <TabsTrigger value="paidAmounts">
-                                <DollarSign className="mr-2 h-4 w-4" />
-                                Paid Amounts
-                            </TabsTrigger>
                             <TabsTrigger value="expenses">
                                 <CreditCard className="mr-2 h-4 w-4" />
                                 Expenses
@@ -1045,12 +1055,6 @@ const page = () => {
                         </TabsList>
                         <TabsContent value="profitLoss">
                             {renderProfitLossStatement()}
-                        </TabsContent>
-                        <TabsContent value="pendingPayments">
-                            {renderPendingPaymentsStatement()}
-                        </TabsContent>
-                        <TabsContent value="paidAmounts">
-                            {renderPaidAmountsStatement()}
                         </TabsContent>
                         <TabsContent value="expenses">
                             <div>
