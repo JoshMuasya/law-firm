@@ -62,6 +62,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import generatePDF from '@/lib/utils/generatePDF';
 
 const formSchema = z.object({
     fullname: z.string().min(3, { message: "Full name must be at least 3 characters long" }),
@@ -112,6 +113,9 @@ const page = () => {
     const [totalPaid, setTotalPaid] = useState(0)
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [periodRevenue, setPeriodRevenue] = useState(0);
+    const [periodExpenses, setPeriodExpenses] = useState(0);
+
 
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -578,7 +582,20 @@ const page = () => {
     }, [fetchCases])
 
     const generateStatement = () => {
-        console.log("Clicked")        
+        const now = new Date();
+
+        const formattedDate = now.toISOString().split('T')[0];
+
+        const referenceNo = `profit-loss_${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+
+
+
+        generatePDF({
+            referenceno: referenceNo,
+            date: formattedDate,
+            revenue: periodRevenue,
+            expenses: periodExpenses
+        })
     }
 
     return (
