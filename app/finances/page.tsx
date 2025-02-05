@@ -63,6 +63,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import generatePDF from '@/lib/utils/generatePDF';
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const formSchema = z.object({
     fullname: z.string().min(3, { message: "Full name must be at least 3 characters long" }),
@@ -115,6 +117,9 @@ const page = () => {
     const [endDate, setEndDate] = useState("");
     const [periodRevenue, setPeriodRevenue] = useState(0);
     const [periodExpenses, setPeriodExpenses] = useState(0);
+    const [revenue, setRevenue] = useState(0);
+    const [tExpenses, setTExpenses] = useState(0);
+    const [totExpenses, setTotExpenses] = useState<number>(0);
 
 
 
@@ -210,7 +215,7 @@ const page = () => {
 
     const generateReceipt = (payment: { id: any; client: any; amount: any; method: any; }) => {
         return (
-            <div className="p-8 max-w-2xl mx-auto">
+            <div id="receipt-content" className="p-8 max-w-2xl mx-auto">
                 <div className="text-center mb-6">
                     <h2 className="text-2xl font-bold">RECEIPT</h2>
                     <p className="text-gray-600">Law Firm Name</p>
@@ -241,6 +246,23 @@ const page = () => {
                 </div>
             </div>
         );
+    };
+
+    // Function to download the receipt as a PDF
+    const downloadReceiptAsPDF = () => {
+        const receiptElement = document.getElementById("receipt-content");
+
+        if (!receiptElement) return;
+
+        html2canvas(receiptElement, { scale: 2 }).then((canvas) => {
+            const imgData = canvas.toDataURL("image/png");
+            const pdf = new jsPDF("p", "mm", "a4");
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+            pdf.save("receipt.pdf");
+        });
     };
 
     const generateInvoice = (caseData: { totalPaid?: number; pending: any; lastPaymentDate?: Date; paymentHistory?: ClientFinances[]; id: any; fullname?: string; email?: string; phonenumber?: string; address?: string; createdAt?: Date; imageUrl?: string; client?: any; }) => {
@@ -499,7 +521,15 @@ const page = () => {
             };
         };
 
-        const { periodRevenue, periodExpenses } = filterDataByPeriod();
+        useEffect(() => {
+            const { periodRevenue, periodExpenses } = filterDataByPeriod();
+            setRevenue(periodRevenue);
+            setTotExpenses(periodExpenses);
+
+            console.log('Expenses 1', periodExpenses)
+        }, [selectedPeriod, startDate, endDate, expenses, clientPayments, cases]);
+
+        console.log('Expenses 1', periodExpenses)
 
         return (
             <Card>
@@ -514,19 +544,19 @@ const page = () => {
                         <div className="flex justify-between">
                             <span>Total Revenue</span>
                             <span className="font-semibold text-green-600">
-                                {formatCurrency(periodRevenue)}
+                                {formatCurrency(totalRevenue)}
                             </span>
                         </div>
                         <div className="flex justify-between">
                             <span>Total Expenses</span>
                             <span className="font-semibold text-red-600">
-                                {formatCurrency(periodExpenses)}
+                                {formatCurrency(totalExpenses)}
                             </span>
                         </div>
                         <div className="flex justify-between font-bold border-t pt-2">
                             <span>Net Profit</span>
-                            <span className={`${periodRevenue - periodExpenses >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                {formatCurrency(periodRevenue - periodExpenses)}
+                            <span className={`${totalRevenue - totalExpenses >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {formatCurrency(totalRevenue - totalExpenses)}
                             </span>
                         </div>
                     </div>
@@ -588,13 +618,14 @@ const page = () => {
 
         const referenceNo = `profit-loss_${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
 
-
+        console.log('Revenue', revenue)
+        console.log('Expenses', totExpenses)
 
         generatePDF({
             referenceno: referenceNo,
             date: formattedDate,
-            revenue: periodRevenue,
-            expenses: periodExpenses
+            revenue: revenue,
+            expenses: totExpenses
         })
     }
 
@@ -973,7 +1004,7 @@ const page = () => {
                                                     method: "Cash"
                                                 })}
                                                 <div className="flex justify-end gap-4">
-                                                    <Button>
+                                                    <Button onClick={downloadReceiptAsPDF}>
                                                         <Printer className="h-4 w-4 mr-2" />
                                                         Print Receipt
                                                     </Button>
