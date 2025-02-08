@@ -40,6 +40,7 @@ import {
 import { Search, Plus, Filter } from 'lucide-react';
 
 import { Label } from "@/components/ui/label"
+import { motion } from 'framer-motion';
 
 const page = () => {
     const [clients, setClients] = useState<Client[]>([])
@@ -121,11 +122,16 @@ const page = () => {
     }
 
     return (
-        <div className='bg-muted flex flex-col justify-center items-center align-middle w-full h-screen'>
-            <Card className='w-11/12 md:w-5/6'>
+        <div className='dash-back flex flex-col justify-center align-middle items-center'>
+            <motion.div
+                className="flex flex-col place-items-center gap-6 py-10 px-20 my-[4%] bg-gradient-to-br from-cyan-400 via-white/30 to-blue-800 backdrop-blur-lg bg-opacity-20 shadow-xl border border-white/20 h-full rounded-tr-[48px] rounded-bl-[48px]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+            >
                 <CardHeader>
                     <CardTitle className='text-center text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>View Clients</CardTitle>
-                    <CardDescription className='text-center text-base md:text-lg lg:text-xl pb-3'>View, Update or Delete a Client</CardDescription>
+                    <CardDescription className='text-center text-base md:text-lg lg:text-xl pb-3 text-black'>View, Update or Delete a Client</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                     <div className="flex space-x-2 mb-4">
@@ -202,12 +208,12 @@ const page = () => {
                     ) : (
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Phone Number</TableHead>
-                                    <TableHead>Address</TableHead>
-                                    <TableHead>Action</TableHead>
+                                <TableRow className='text-black'>
+                                    <TableHead className='text-black'>Name</TableHead>
+                                    <TableHead className='text-black'>Email</TableHead>
+                                    <TableHead className='text-black'>Phone Number</TableHead>
+                                    <TableHead className='text-black'>Address</TableHead>
+                                    <TableHead className='text-black'>Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -249,7 +255,7 @@ const page = () => {
                         </Table>
                     )}
                 </CardContent>
-            </Card>
+            </motion.div>
 
             <Toaster />
         </div>

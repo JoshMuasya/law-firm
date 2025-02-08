@@ -65,6 +65,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import generatePDF from '@/lib/utils/generatePDF';
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { motion } from 'framer-motion';
 
 const formSchema = z.object({
     fullname: z.string().min(3, { message: "Full name must be at least 3 characters long" }),
@@ -630,98 +631,104 @@ const page = () => {
     }
 
     return (
-        <div className="p-6">
-            <div className='py-5 font-bold flex flex-col justify-center align-middle items-center text-4xl'>
-                An overview of your Firm's Finances
-            </div>
-            {/* Financial Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-medium">Total Revenue</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold">{formatCurrency(totalRevenue)}</p>
-                    </CardContent>
-                </Card>
+        <div className='dash-back flex flex-col justify-center align-middle items-center'>
+            <motion.div
+                className="flex flex-col place-items-center gap-6 py-10 px-20 my-[4%] bg-gradient-to-br from-cyan-400 via-white/30 to-blue-800 backdrop-blur-lg bg-opacity-20 shadow-xl border border-white/20 h-full rounded-tr-[48px] rounded-bl-[48px]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+            >
+                <div className='py-5 font-bold flex flex-col justify-center align-middle items-center text-4xl'>
+                    An overview of your Firm's Finances
+                </div>
+                {/* Financial Overview */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg font-medium">Total Revenue</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-2xl font-bold">{formatCurrency(totalRevenue)}</p>
+                        </CardContent>
+                    </Card>
 
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-medium">Total Expenses</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold">{formatCurrency(totalExpenses)}</p>
-                    </CardContent>
-                </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg font-medium">Total Expenses</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-2xl font-bold">{formatCurrency(totalExpenses)}</p>
+                        </CardContent>
+                    </Card>
 
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-medium">Total Profit</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold text-green-600">{formatCurrency(totalRevenue - totalExpenses)}</p>
-                    </CardContent>
-                </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg font-medium">Total Profit</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalRevenue - totalExpenses)}</p>
+                        </CardContent>
+                    </Card>
 
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-medium">Pending Payments</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold text-yellow-600">{formatCurrency(totalRevenue - totalPaid)}</p>
-                    </CardContent>
-                </Card>
-            </div>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg font-medium">Pending Payments</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-2xl font-bold text-yellow-600">{formatCurrency(totalRevenue - totalPaid)}</p>
+                        </CardContent>
+                    </Card>
+                </div>
 
-            {/* Case Expenses Tracking */}
-            <Card className="mb-8">
-                <CardHeader>
-                    <CardTitle className="text-xl flex justify-between items-center">
-                        Case Expenses Tracker
-                        <div className="flex items-center gap-2">
-                            <div className="relative">
-                                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                                <Input
-                                    placeholder="Search cases..."
-                                    className="pl-8 w-[200px]"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
+                {/* Case Expenses Tracking */}
+                <Card className="mb-8">
+                    <CardHeader>
+                        <CardTitle className="text-xl flex justify-between items-center">
+                            Case Expenses Tracker
+                            <div className="flex items-center gap-2">
+                                <div className="relative">
+                                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                    <Input
+                                        placeholder="Search cases..."
+                                        className="pl-8 w-[200px]"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="w-full">
-                        <div className="bg-gray-100 p-4 grid grid-cols-5 gap-4 font-medium">
-                            <div>Case</div>
-                            <div>Expenses</div>
-                            <div>Expense Cap</div>
-                            <div>Balance</div>
-                        </div>
-                        <div className="divide-y">
-                            {filteredCases.map(currentCase => (
-                                <div key={currentCase.id} className="grid grid-cols-5 gap-4 p-4 items-center">
-                                    <div>{currentCase.caseName}</div>
-                                    <div>
-                                        {currentCase?.expenses?.map(expense => (
-                                            <div
-                                                key={expense.id}
-                                                className="border rounded-lg shadow-md p-4 my-3 bg-white"
-                                            >
-                                                <h3 className="font-semibold text-lg text-gray-800">{expense.name}</h3>
-                                                <p className="text-gray-600 mt-2">{formatCurrency(parseInt(expense.amount))}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div>{formatCurrency(parseInt(currentCase?.expectedExpense || "0"))}</div>
-                                    <div className={`font-bold ${calculateTotalExpenses(currentCase?.expenses || []) > (currentCase?.expectedExpense || 0)
-                                        ? 'text-red-500'
-                                        : 'text-green-500'
-                                        }`}>
-                                        {formatCurrency((Number(currentCase?.expectedExpense || 0) - Number(calculateTotalExpenses(currentCase?.expenses || []))))}
-                                    </div>
-                                    {/* <div>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="w-full">
+                            <div className="bg-gray-100 p-4 grid grid-cols-5 gap-4 font-medium">
+                                <div>Case</div>
+                                <div>Expenses</div>
+                                <div>Expense Cap</div>
+                                <div>Balance</div>
+                            </div>
+                            <div className="divide-y">
+                                {filteredCases.map(currentCase => (
+                                    <div key={currentCase.id} className="grid grid-cols-5 gap-4 p-4 items-center">
+                                        <div>{currentCase.caseName}</div>
+                                        <div>
+                                            {currentCase?.expenses?.map(expense => (
+                                                <div
+                                                    key={expense.id}
+                                                    className="border rounded-lg shadow-md p-4 my-3 bg-white"
+                                                >
+                                                    <h3 className="font-semibold text-lg text-gray-800">{expense.name}</h3>
+                                                    <p className="text-gray-600 mt-2">{formatCurrency(parseInt(expense.amount))}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div>{formatCurrency(parseInt(currentCase?.expectedExpense || "0"))}</div>
+                                        <div className={`font-bold ${calculateTotalExpenses(currentCase?.expenses || []) > (currentCase?.expectedExpense || 0)
+                                            ? 'text-red-500'
+                                            : 'text-green-500'
+                                            }`}>
+                                            {formatCurrency((Number(currentCase?.expectedExpense || 0) - Number(calculateTotalExpenses(currentCase?.expenses || []))))}
+                                        </div>
+                                        {/* <div>
                                         <Dialog
                                             open={isAddExpenseDialogOpen && selectedCase?.id === currentCase.id}
                                             onOpenChange={setIsAddExpenseDialogOpen}
@@ -776,368 +783,134 @@ const page = () => {
                                             </DialogContent>
                                         </Dialog>
                                     </div> */}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Client Payments */}
-            <Card className="mb-8">
-                <CardHeader>
-                    <CardTitle className="text-xl">Client Payments</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex gap-4 mb-4">
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button>
-                                    <Receipt className="mr-2 h-4 w-4" />
-                                    Record Payment
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-md">
-                                <DialogHeader>
-                                    <DialogTitle>Record New Payment</DialogTitle>
-
-                                    {/* Search Input with Dropdown */}
-                                    <div className="relative">
-                                        <div className="flex space-x-2 mb-4">
-                                            <div className="relative flex-grow">
-                                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                                                <Input
-                                                    placeholder="Search clients..."
-                                                    className="pl-8"
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Search Results Dropdown */}
-                                        {showDropdown && filteredClients.length > 0 && (
-                                            <div className="absolute w-full bg-white rounded-md border border-gray-200 shadow-lg mt-1 max-h-48 overflow-y-auto z-50">
-                                                {filteredClients.map((client) => (
-                                                    <div
-                                                        key={client.id}
-                                                        className="p-2 hover:bg-gray-100 cursor-pointer"
-                                                        onClick={() => handleClientSelect(client)}
-                                                    >
-                                                        <div className="font-medium">{client.fullname}</div>
-                                                        <div className="text-sm text-gray-500">{client.email}</div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
                                     </div>
-                                </DialogHeader>
-
-                                <Form {...form}>
-                                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                                        {/* Client Name */}
-                                        <FormField
-                                            control={form.control}
-                                            name="fullname"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Full Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Full Name" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        {/* Address */}
-                                        <FormField
-                                            control={form.control}
-                                            name="address"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Address</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Address" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        {/* Email */}
-                                        <FormField
-                                            control={form.control}
-                                            name="email"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Email</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Email" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        {/* Phone Number */}
-                                        <FormField
-                                            control={form.control}
-                                            name="phonenumber"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Phone Number</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Phone Number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        {/* Amount Paid */}
-                                        <FormField
-                                            control={form.control}
-                                            name="amountPaid"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Amount Paid</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Amount Paid" type="number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <Button type="submit">Submit</Button>
-                                    </form>
-                                </Form>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-
-                    <div className="w-full">
-                        <div className="bg-gray-100 p-4 grid grid-cols-6 gap-4 font-medium">
-                            <div>Client Name</div>
-                            <div>Amount Paid</div>
-                            <div>Pending</div>
-                            <div>Last Payment</div>
-                            <div>Payment History</div>
-                            <div>Actions</div>
-                        </div>
-                        <div className="divide-y">
-                            {processedClients.map(client => (
-                                <div key={client.id} className="grid grid-cols-6 gap-4 p-4 items-center">
-                                    <div className="font-medium">{client.fullname}</div>
-                                    <div className="text-green-600">
-                                        {formatCurrency(client.amountPaid)}
-                                    </div>
-                                    <div className="text-red-600">
-                                        {formatCurrency(client.pending)}
-                                    </div>
-                                    <div>
-                                        {client.lastPaymentDate
-                                            ? format(new Date(client.lastPaymentDate), 'MMM dd, yyyy')
-                                            : 'No payments'}
-                                    </div>
-                                    <div>
-                                        <button
-                                            className="text-blue-600 hover:text-blue-800"
-                                            onClick={() => setSelectedClientForHistory(client)}
-                                        >
-                                            View History ({client.paymentHistory.length})
-                                        </button>
-
-                                        {/* Payment History Dialog */}
-                                        <Dialog open={selectedClientForHistory !== null} onOpenChange={() => setSelectedClientForHistory(null)}>
-                                            <DialogContent className="max-w-2xl">
-                                                <DialogHeader>
-                                                    <DialogTitle>Payment History for {selectedClientForHistory?.fullname}</DialogTitle>
-                                                </DialogHeader>
-
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>Date</TableHead>
-                                                            <TableHead>Amount</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {selectedClientForHistory?.paymentHistory.map((payment, index) => (
-                                                            <TableRow key={index}>
-                                                                <TableCell>
-                                                                    {format(new Date(payment.createdAt), 'MMM dd, yyyy')}
-                                                                </TableCell>
-                                                                <TableCell className="text-green-600">
-                                                                    {formatCurrency(payment.amountPaid)}
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        ))}
-                                                    </TableBody>
-                                                </Table>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-                                    <div className='flex flex-row justify-around align-middle items-center'>
-                                        <Dialog>
-                                            <DialogTrigger asChild className='px-2'>
-                                                <Button variant="outline" size="sm">
-                                                    <Receipt className="h-4 w-4 mr-2" />
-                                                    Receipt
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-2xl">
-                                                <DialogHeader>
-                                                    <div>
-                                                        <img src="/logo.png" alt="Logo" className="w-12 h-12" />
-                                                    </div>
-                                                    <DialogTitle>Receipt</DialogTitle>
-                                                    <DialogDescription id="receipt-description" className="text-gray-600 text-center">
-                                                        Law Firm Name - Payment Receipt Details
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                {generateReceipt({
-                                                    id: 1,
-                                                    client: client.fullname,
-                                                    amount: client.amountPaid,
-                                                    method: "Cash"
-                                                })}
-                                                <div className="flex justify-end gap-4">
-                                                    <Button onClick={downloadReceiptAsPDF}>
-                                                        <Printer className="h-4 w-4 mr-2" />
-                                                        Print Receipt
-                                                    </Button>
-                                                </div>
-                                            </DialogContent>
-                                        </Dialog>
-
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" size="sm">
-                                                    <FileText className="h-4 w-4 mr-2" />
-                                                    Invoice
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-2xl">
-                                                <DialogHeader>
-                                                    <DialogTitle>Invoice</DialogTitle>
-                                                </DialogHeader>
-                                                {generateInvoice(client)}
-                                                <div className="flex justify-end gap-4">
-                                                    <Button>
-                                                        <Printer className="h-4 w-4 mr-2" />
-                                                        Print Invoice
-                                                    </Button>
-                                                </div>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Financial Statements */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-xl">Financial Statements</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex gap-4 mb-4">
-                        <Select
-                            defaultValue={selectedPeriod}
-                            onValueChange={setSelectedPeriod}
-                        >
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select Period" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="month">This Month</SelectItem>
-                                <SelectItem value="quarter">This Quarter</SelectItem>
-                                <SelectItem value="year">This Year</SelectItem>
-                                <SelectItem value="custom">Custom Range</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        {selectedPeriod === "custom" && (
-                            <div className="flex gap-4 items-center">
-                                <Input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    placeholder="Start Date"
-                                    className="w-[150px]"
-                                />
-                                <span className="text-gray-500">to</span>
-                                <Input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    placeholder="End Date"
-                                    className="w-[150px]"
-                                />
+                                ))}
                             </div>
-                        )}
+                        </div>
+                    </CardContent>
+                </Card>
 
-                        <Button
-                            onClick={generateStatement}
-                        >
-                            <ClipboardList className="mr-2 h-4 w-4" />
-                            Generate Statement
-                        </Button>
-                    </div>
+                {/* Client Payments */}
+                <Card className="mb-8">
+                    <CardHeader>
+                        <CardTitle className="text-xl">Client Payments</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex gap-4 mb-4">
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button>
+                                        <Receipt className="mr-2 h-4 w-4" />
+                                        Record Payment
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-md">
+                                    <DialogHeader>
+                                        <DialogTitle>Record New Payment</DialogTitle>
 
-                    <Tabs defaultValue="profitLoss" className="w-full">
-                        <TabsList className="grid w-full grid-cols-4">
-                            <TabsTrigger value="profitLoss">
-                                <BarChart className="mr-2 h-4 w-4" />
-                                Profit & Loss
-                            </TabsTrigger>
-                            <TabsTrigger value="expenses">
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                Expenses
-                            </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="profitLoss">
-                            {renderProfitLossStatement()}
-                        </TabsContent>
-                        <TabsContent value="expenses">
-                            <div>
-                                <div>
-                                    {renderExpensesStatement()}
-                                </div>
+                                        {/* Search Input with Dropdown */}
+                                        <div className="relative">
+                                            <div className="flex space-x-2 mb-4">
+                                                <div className="relative flex-grow">
+                                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                                                    <Input
+                                                        placeholder="Search clients..."
+                                                        className="pl-8"
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
 
-                                <div className='mt-4'>
-                                    <CardTitle className="text-lg flex items-center">
-                                        Add Expenses
-                                    </CardTitle>
-                                    <Form {...expensesForm}>
-                                        <form onSubmit={expensesForm.handleSubmit(onExpensesSubmit)} className="space-y-8">
-                                            {/* Desc */}
+                                            {/* Search Results Dropdown */}
+                                            {showDropdown && filteredClients.length > 0 && (
+                                                <div className="absolute w-full bg-white rounded-md border border-gray-200 shadow-lg mt-1 max-h-48 overflow-y-auto z-50">
+                                                    {filteredClients.map((client) => (
+                                                        <div
+                                                            key={client.id}
+                                                            className="p-2 hover:bg-gray-100 cursor-pointer"
+                                                            onClick={() => handleClientSelect(client)}
+                                                        >
+                                                            <div className="font-medium">{client.fullname}</div>
+                                                            <div className="text-sm text-gray-500">{client.email}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </DialogHeader>
+
+                                    <Form {...form}>
+                                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                                            {/* Client Name */}
                                             <FormField
-                                                control={expensesForm.control}
-                                                name="desc"
+                                                control={form.control}
+                                                name="fullname"
                                                 render={({ field }) => (
                                                     <FormItem>
+                                                        <FormLabel>Full Name</FormLabel>
                                                         <FormControl>
-                                                            <Input placeholder="Description" {...field} />
+                                                            <Input placeholder="Full Name" {...field} />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
                                             />
 
-                                            {/* Amount */}
+                                            {/* Address */}
                                             <FormField
-                                                control={expensesForm.control}
-                                                name="expenseAmount"
+                                                control={form.control}
+                                                name="address"
                                                 render={({ field }) => (
                                                     <FormItem>
+                                                        <FormLabel>Address</FormLabel>
                                                         <FormControl>
-                                                            <Input placeholder="Amount" type="number" {...field} />
+                                                            <Input placeholder="Address" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            {/* Email */}
+                                            <FormField
+                                                control={form.control}
+                                                name="email"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Email</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="Email" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            {/* Phone Number */}
+                                            <FormField
+                                                control={form.control}
+                                                name="phonenumber"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Phone Number</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="Phone Number" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            {/* Amount Paid */}
+                                            <FormField
+                                                control={form.control}
+                                                name="amountPaid"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Amount Paid</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="Amount Paid" type="number" {...field} />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
@@ -1147,13 +920,248 @@ const page = () => {
                                             <Button type="submit">Submit</Button>
                                         </form>
                                     </Form>
-                                </div>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+
+                        <div className="w-full">
+                            <div className="bg-gray-100 p-4 grid grid-cols-6 gap-4 font-medium">
+                                <div>Client Name</div>
+                                <div>Amount Paid</div>
+                                <div>Pending</div>
+                                <div>Last Payment</div>
+                                <div>Payment History</div>
+                                <div>Actions</div>
                             </div>
-                        </TabsContent>
-                    </Tabs>
-                </CardContent>
-            </Card>
-            <Toaster />
+                            <div className="divide-y">
+                                {processedClients.map(client => (
+                                    <div key={client.id} className="grid grid-cols-6 gap-4 p-4 items-center">
+                                        <div className="font-medium">{client.fullname}</div>
+                                        <div className="text-green-600">
+                                            {formatCurrency(client.amountPaid)}
+                                        </div>
+                                        <div className="text-red-600">
+                                            {formatCurrency(client.pending)}
+                                        </div>
+                                        <div>
+                                            {client.lastPaymentDate
+                                                ? format(new Date(client.lastPaymentDate), 'MMM dd, yyyy')
+                                                : 'No payments'}
+                                        </div>
+                                        <div>
+                                            <button
+                                                className="text-blue-600 hover:text-blue-800"
+                                                onClick={() => setSelectedClientForHistory(client)}
+                                            >
+                                                View History ({client.paymentHistory.length})
+                                            </button>
+
+                                            {/* Payment History Dialog */}
+                                            <Dialog open={selectedClientForHistory !== null} onOpenChange={() => setSelectedClientForHistory(null)}>
+                                                <DialogContent className="max-w-2xl">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Payment History for {selectedClientForHistory?.fullname}</DialogTitle>
+                                                    </DialogHeader>
+
+                                                    <Table>
+                                                        <TableHeader>
+                                                            <TableRow>
+                                                                <TableHead>Date</TableHead>
+                                                                <TableHead>Amount</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {selectedClientForHistory?.paymentHistory.map((payment, index) => (
+                                                                <TableRow key={index}>
+                                                                    <TableCell>
+                                                                        {format(new Date(payment.createdAt), 'MMM dd, yyyy')}
+                                                                    </TableCell>
+                                                                    <TableCell className="text-green-600">
+                                                                        {formatCurrency(payment.amountPaid)}
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            ))}
+                                                        </TableBody>
+                                                    </Table>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
+                                        <div className='flex flex-row justify-around align-middle items-center'>
+                                            <Dialog>
+                                                <DialogTrigger asChild className='px-2'>
+                                                    <Button variant="outline" size="sm">
+                                                        <Receipt className="h-4 w-4 mr-2" />
+                                                        Receipt
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-2xl">
+                                                    <DialogHeader>
+                                                        <div>
+                                                            <img src="/logo.png" alt="Logo" className="w-12 h-12" />
+                                                        </div>
+                                                        <DialogTitle>Receipt</DialogTitle>
+                                                        <DialogDescription id="receipt-description" className="text-gray-600 text-center">
+                                                            Law Firm Name - Payment Receipt Details
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    {generateReceipt({
+                                                        id: 1,
+                                                        client: client.fullname,
+                                                        amount: client.amountPaid,
+                                                        method: "Cash"
+                                                    })}
+                                                    <div className="flex justify-end gap-4">
+                                                        <Button onClick={downloadReceiptAsPDF}>
+                                                            <Printer className="h-4 w-4 mr-2" />
+                                                            Print Receipt
+                                                        </Button>
+                                                    </div>
+                                                </DialogContent>
+                                            </Dialog>
+
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="outline" size="sm">
+                                                        <FileText className="h-4 w-4 mr-2" />
+                                                        Invoice
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-2xl">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Invoice</DialogTitle>
+                                                    </DialogHeader>
+                                                    {generateInvoice(client)}
+                                                    <div className="flex justify-end gap-4">
+                                                        <Button>
+                                                            <Printer className="h-4 w-4 mr-2" />
+                                                            Print Invoice
+                                                        </Button>
+                                                    </div>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Financial Statements */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-xl">Financial Statements</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex gap-4 mb-4">
+                            <Select
+                                defaultValue={selectedPeriod}
+                                onValueChange={setSelectedPeriod}
+                            >
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Select Period" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="month">This Month</SelectItem>
+                                    <SelectItem value="quarter">This Quarter</SelectItem>
+                                    <SelectItem value="year">This Year</SelectItem>
+                                    <SelectItem value="custom">Custom Range</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {selectedPeriod === "custom" && (
+                                <div className="flex gap-4 items-center">
+                                    <Input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        placeholder="Start Date"
+                                        className="w-[150px]"
+                                    />
+                                    <span className="text-gray-500">to</span>
+                                    <Input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        placeholder="End Date"
+                                        className="w-[150px]"
+                                    />
+                                </div>
+                            )}
+
+                            <Button
+                                onClick={generateStatement}
+                            >
+                                <ClipboardList className="mr-2 h-4 w-4" />
+                                Generate Statement
+                            </Button>
+                        </div>
+
+                        <Tabs defaultValue="profitLoss" className="w-full">
+                            <TabsList className="grid w-full grid-cols-4">
+                                <TabsTrigger value="profitLoss">
+                                    <BarChart className="mr-2 h-4 w-4" />
+                                    Profit & Loss
+                                </TabsTrigger>
+                                <TabsTrigger value="expenses">
+                                    <CreditCard className="mr-2 h-4 w-4" />
+                                    Expenses
+                                </TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="profitLoss">
+                                {renderProfitLossStatement()}
+                            </TabsContent>
+                            <TabsContent value="expenses">
+                                <div>
+                                    <div>
+                                        {renderExpensesStatement()}
+                                    </div>
+
+                                    <div className='mt-4'>
+                                        <CardTitle className="text-lg flex items-center">
+                                            Add Expenses
+                                        </CardTitle>
+                                        <Form {...expensesForm}>
+                                            <form onSubmit={expensesForm.handleSubmit(onExpensesSubmit)} className="space-y-8">
+                                                {/* Desc */}
+                                                <FormField
+                                                    control={expensesForm.control}
+                                                    name="desc"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Description" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                {/* Amount */}
+                                                <FormField
+                                                    control={expensesForm.control}
+                                                    name="expenseAmount"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <Input placeholder="Amount" type="number" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <Button type="submit">Submit</Button>
+                                            </form>
+                                        </Form>
+                                    </div>
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+                    </CardContent>
+                </Card>
+                <Toaster />
+                </ motion.div>
         </div>
     );
 

@@ -80,3 +80,10 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.dash-back {
+  background-image: url('../public/landing.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}

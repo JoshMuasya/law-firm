@@ -28,6 +28,7 @@ import { z } from "zod"
 
 import toast, { Toaster } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 const error = () => toast('Failed to Add Event!!! Try Again!!!');
 const added = () => toast('Event Added Successfully!!!');
@@ -80,66 +81,28 @@ const page = () => {
     }
 
     return (
-        <Card className="w-full max-w-2xl mx-auto my-10 bg-accent">
-            <CardHeader>
-                <CardTitle>Create New Event</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="eventTitle"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Event Title</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Enter event title" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="eventType"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Event Type</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+        <div className='dash-back flex flex-col justify-center align-middle items-center'>
+            <motion.div
+                className="flex flex-col place-items-center gap-6 py-10 px-20 my-[4%] bg-gradient-to-br from-cyan-400 via-white/30 to-blue-800 backdrop-blur-lg bg-opacity-20 shadow-xl border border-white/20 h-full rounded-tr-[48px] rounded-bl-[48px]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+            >
+                <CardHeader>
+                    <CardTitle>Create New Event</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="eventTitle"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Event Title</FormLabel>
                                         <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select event type" />
-                                            </SelectTrigger>
+                                            <Input placeholder="Enter event title" {...field} />
                                         </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="court">Court Hearing</SelectItem>
-                                            <SelectItem value="meeting">Client Meeting</SelectItem>
-                                            <SelectItem value="deadline">Filing Deadline</SelectItem>
-                                            <SelectItem value="deposition">Deposition</SelectItem>
-                                            <SelectItem value="internal">Internal Meeting</SelectItem>
-                                            <SelectItem value="other">Other</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="flex space-x-4">
-                            <FormField
-                                control={form.control}
-                                name="startDate"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel>Start Date</FormLabel>
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            className="rounded-md border"
-                                        />
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -147,54 +110,43 @@ const page = () => {
 
                             <FormField
                                 control={form.control}
-                                name="endDate"
+                                name="eventType"
                                 render={({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel>End Date</FormLabel>
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            className="rounded-md border"
-                                        />
+                                    <FormItem>
+                                        <FormLabel>Event Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select event type" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="court">Court Hearing</SelectItem>
+                                                <SelectItem value="meeting">Client Meeting</SelectItem>
+                                                <SelectItem value="deadline">Filing Deadline</SelectItem>
+                                                <SelectItem value="deposition">Deposition</SelectItem>
+                                                <SelectItem value="internal">Internal Meeting</SelectItem>
+                                                <SelectItem value="other">Other</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
-                        </div>
 
-                        <FormField
-                            control={form.control}
-                            name="isAllDay"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                    <div className="space-y-0.5">
-                                        <FormLabel className="text-base">All Day Event</FormLabel>
-                                        <FormDescription>
-                                            Toggle if this is an all-day event
-                                        </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                        <Switch
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                            )}
-                        />
-
-                        {!isAllDay && (
                             <div className="flex space-x-4">
                                 <FormField
                                     control={form.control}
-                                    name="startTime"
+                                    name="startDate"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Start Time</FormLabel>
-                                            <FormControl>
-                                                <Input type="time" {...field} />
-                                            </FormControl>
+                                        <FormItem className="flex flex-col">
+                                            <FormLabel>Start Date</FormLabel>
+                                            <Calendar
+                                                mode="single"
+                                                selected={field.value}
+                                                onSelect={field.onChange}
+                                                className="rounded-md border"
+                                            />
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -202,118 +154,174 @@ const page = () => {
 
                                 <FormField
                                     control={form.control}
-                                    name="endTime"
+                                    name="endDate"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>End Time</FormLabel>
-                                            <FormControl>
-                                                <Input type="time" {...field} />
-                                            </FormControl>
+                                        <FormItem className="flex flex-col">
+                                            <FormLabel>End Date</FormLabel>
+                                            <Calendar
+                                                mode="single"
+                                                selected={field.value}
+                                                onSelect={field.onChange}
+                                                className="rounded-md border"
+                                            />
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                             </div>
-                        )}
 
-                        <FormField
-                            control={form.control}
-                            name="location"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Location</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Enter event location" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="relatedCase"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Related Case</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormField
+                                control={form.control}
+                                name="isAllDay"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base">All Day Event</FormLabel>
+                                            <FormDescription>
+                                                Toggle if this is an all-day event
+                                            </FormDescription>
+                                        </div>
                                         <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select related case" />
-                                            </SelectTrigger>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
                                         </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="case1">Smith vs. Johnson</SelectItem>
-                                            <SelectItem value="case2">Doe Corporation Lawsuit</SelectItem>
-                                            <SelectItem value="case3">Estate of Brown</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                                    </FormItem>
+                                )}
+                            />
 
-                        <FormField
-                            control={form.control}
-                            name="participants"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Participants</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Enter participant names or emails" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                            {!isAllDay && (
+                                <div className="flex space-x-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="startTime"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Start Time</FormLabel>
+                                                <FormControl>
+                                                    <Input type="time" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Description</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="Enter event description" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
+                                    <FormField
+                                        control={form.control}
+                                        name="endTime"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>End Time</FormLabel>
+                                                <FormControl>
+                                                    <Input type="time" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             )}
-                        />
 
-                        <FormField
-                            control={form.control}
-                            name="reminder"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Reminder</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormField
+                                control={form.control}
+                                name="location"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Location</FormLabel>
                                         <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select reminder time" />
-                                            </SelectTrigger>
+                                            <Input placeholder="Enter event location" {...field} />
                                         </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="15min">15 minutes before</SelectItem>
-                                            <SelectItem value="30min">30 minutes before</SelectItem>
-                                            <SelectItem value="1hour">1 hour before</SelectItem>
-                                            <SelectItem value="1day">1 day before</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                        <div className="flex justify-end space-x-2">
-                            <Button variant="outline" onClick={() => router.push("/events")}>Cancel</Button>
-                            <Button type="submit">Create Event</Button>
-                        </div>
-                    </form>
-                </Form>
-            </CardContent>
-        </Card>
-    );
+                            <FormField
+                                control={form.control}
+                                name="relatedCase"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Related Case</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select related case" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="case1">Smith vs. Johnson</SelectItem>
+                                                <SelectItem value="case2">Doe Corporation Lawsuit</SelectItem>
+                                                <SelectItem value="case3">Estate of Brown</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="participants"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Participants</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Enter participant names or emails" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Description</FormLabel>
+                                        <FormControl>
+                                            <Textarea placeholder="Enter event description" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="reminder"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Reminder</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select reminder time" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="15min">15 minutes before</SelectItem>
+                                                <SelectItem value="30min">30 minutes before</SelectItem>
+                                                <SelectItem value="1hour">1 hour before</SelectItem>
+                                                <SelectItem value="1day">1 day before</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <div className="flex justify-end space-x-2">
+                                <Button variant="outline" onClick={() => router.push("/events")}>Cancel</Button>
+                                <Button type="submit">Create Event</Button>
+                            </div>
+                        </form>
+                    </Form>
+                </CardContent>
+            </motion.div>
+            </ div>
+            );
 };
 
-export default page
+            export default page

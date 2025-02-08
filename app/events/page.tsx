@@ -39,6 +39,8 @@ import {
 } from "@/components/ui/form"
 import * as z from "zod"
 import { Input } from '@/components/ui/input';
+import { motion } from 'framer-motion';
+
 
 const eventSchema = z.object({
     id: z.number(),
@@ -149,181 +151,188 @@ const page = () => {
     };
 
     return (
-        <div className="p-4">
-            <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold">Calendar</h1>
-                <Button asChild>
-                    <Link href="/events/create">Create Events</Link>
-                </Button>
+        <div className='dash-back flex flex-col justify-center align-middle items-center'>
+            <motion.div
+                className="flex flex-col place-items-center gap-6 py-10 px-20 my-[4%] bg-gradient-to-br from-cyan-400 via-white/30 to-blue-800 backdrop-blur-lg bg-opacity-20 shadow-xl border border-white/20 h-full rounded-tr-[48px] rounded-bl-[48px]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+            >
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-bold">Calendar</h1>
+                    <Button asChild>
+                        <Link href="/events/create">Create Events</Link>
+                    </Button>
 
-            </div>
-            <div className="flex space-x-4 mb-4">
-                <Select value={view} onValueChange={setView}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select view" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="day">Day</SelectItem>
-                        <SelectItem value="week">Week</SelectItem>
-                        <SelectItem value="month">Month</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Button variant="outline">Today</Button>
-                <div className="flex space-x-2">
-                    <Button variant="outline">&lt;</Button>
-                    <Button variant="outline">&gt;</Button>
                 </div>
-            </div>
-            <Card className="mb-4">
-                <CardContent className="p-4">
-                    {renderCalendar()}
-                </CardContent>
-            </Card>
-            <div className="grid grid-cols-3 gap-4">
-                <Card className="col-span-2">
-                    <CardHeader>
-                        <CardTitle>Upcoming Events</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {events.map(event => (
-                            <div key={event.id} className="flex items-center mb-2 p-2 bg-gray-50 rounded">
-                                {renderEventIcon(event.type)}
-                                <div>
-                                    <div className="font-semibold">{event.title}</div>
-                                    <div className="text-sm text-gray-500">
-                                        {event.date.toDateString()} at {event.time}
-                                    </div>
-                                </div>
-
-                                <div className="flex space-x-2">
-                                    <Button variant="outline" size="sm" onClick={() => handleUpdateEvent(event)}>
-                                        <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={() => handleDeleteEvent(event)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
+                <div className="flex space-x-4 mb-4">
+                    <Select value={view} onValueChange={setView}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select view" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="day">Day</SelectItem>
+                            <SelectItem value="week">Week</SelectItem>
+                            <SelectItem value="month">Month</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button variant="outline">Today</Button>
+                    <div className="flex space-x-2">
+                        <Button variant="outline">&lt;</Button>
+                        <Button variant="outline">&gt;</Button>
+                    </div>
+                </div>
+                <Card className="mb-4">
+                    <CardContent className="p-4">
+                        {renderCalendar()}
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Upcoming Deadlines</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {events.filter(e => e.type === 'deadline').map(event => (
-                            <div key={event.id} className="flex items-center mb-2 p-2 bg-gray-50 rounded">
-                                <AlertTriangle className="h-4 w-4 mr-2 text-red-500" />
-                                <div>
-                                    <div className="font-semibold">{event.title}</div>
-                                    <div className="text-sm text-gray-500">
-                                        {event.date.toDateString()} at {event.time}
+                <div className="grid grid-cols-3 gap-4">
+                    <Card className="col-span-2">
+                        <CardHeader>
+                            <CardTitle>Upcoming Events</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {events.map(event => (
+                                <div key={event.id} className="flex items-center mb-2 p-2 bg-gray-50 rounded">
+                                    {renderEventIcon(event.type)}
+                                    <div>
+                                        <div className="font-semibold">{event.title}</div>
+                                        <div className="text-sm text-gray-500">
+                                            {event.date.toDateString()} at {event.time}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex space-x-2">
+                                        <Button variant="outline" size="sm" onClick={() => handleUpdateEvent(event)}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="outline" size="sm" onClick={() => handleDeleteEvent(event)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Upcoming Deadlines</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {events.filter(e => e.type === 'deadline').map(event => (
+                                <div key={event.id} className="flex items-center mb-2 p-2 bg-gray-50 rounded">
+                                    <AlertTriangle className="h-4 w-4 mr-2 text-red-500" />
+                                    <div>
+                                        <div className="font-semibold">{event.title}</div>
+                                        <div className="text-sm text-gray-500">
+                                            {event.date.toDateString()} at {event.time}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                </div>
 
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure you want to delete this event?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the event.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDeleteEvent}>Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Edit Event</DialogTitle>
-                        <DialogDescription>
-                            Make changes to your event here. Click save when you're done.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                            <FormField
-                                control={form.control}
-                                name="title"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Title</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Event title" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="type"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Type</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure you want to delete this event?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the event.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={confirmDeleteEvent}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle>Edit Event</DialogTitle>
+                            <DialogDescription>
+                                Make changes to your event here. Click save when you're done.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                                <FormField
+                                    control={form.control}
+                                    name="title"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Title</FormLabel>
                                             <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select event type" />
-                                                </SelectTrigger>
+                                                <Input placeholder="Event title" {...field} />
                                             </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="court">Court Hearing</SelectItem>
-                                                <SelectItem value="meeting">Client Meeting</SelectItem>
-                                                <SelectItem value="deadline">Filing Deadline</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="time"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Time</FormLabel>
-                                        <FormControl>
-                                            <Input type="time" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="date"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Date</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="date"
-                                                {...field}
-                                                value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
-                                                onChange={(e) => field.onChange(new Date(e.target.value))}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <DialogFooter>
-                                <Button type="submit">Save changes</Button>
-                            </DialogFooter>
-                        </form>
-                    </Form>
-                </DialogContent>
-            </Dialog>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="type"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Type</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select event type" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="court">Court Hearing</SelectItem>
+                                                    <SelectItem value="meeting">Client Meeting</SelectItem>
+                                                    <SelectItem value="deadline">Filing Deadline</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="time"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Time</FormLabel>
+                                            <FormControl>
+                                                <Input type="time" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="date"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Date</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="date"
+                                                    {...field}
+                                                    value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
+                                                    onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <DialogFooter>
+                                    <Button type="submit">Save changes</Button>
+                                </DialogFooter>
+                            </form>
+                        </Form>
+                    </DialogContent>
+                </Dialog>
+            </ motion.div>
         </div>
     );
 };

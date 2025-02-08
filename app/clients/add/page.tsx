@@ -29,6 +29,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { addDoc, collection } from 'firebase/firestore'
 import { db, storage } from '@/lib/firebase'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import { motion } from 'framer-motion'
 
 const errorMsg = () => toast('Failed to Add Client!!! Try Again!!!');
 const added = () => toast('Client Added Successfully!!!');
@@ -95,13 +96,18 @@ const page = () => {
     }
 
     return (
-        <div className='bg-muted flex flex-col justify-center items-center align-middle w-full h-screen'>
-            <Card className='w-11/12 md:w-3/4 lg:w-1/2'>
+        <div className='dash-back flex flex-col justify-center align-middle items-center'>
+            <motion.div
+                className="flex flex-col place-items-center gap-6 py-10 px-20 my-[4%] bg-gradient-to-br from-cyan-400 via-white/30 to-blue-800 backdrop-blur-lg bg-opacity-20 shadow-xl border border-white/20 h-full rounded-tr-[48px] rounded-bl-[48px]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+            >
                 <CardHeader>
                     <CardTitle className='text-center text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>Add Clients</CardTitle>
-                    <CardDescription className='text-center text-base md:text-lg lg:text-xl pb-3'>Fill in the Form to Add a Client</CardDescription>
+                    <CardDescription className='text-center text-base md:text-lg lg:text-xl pb-3 text-black'>Fill in the Form to Add a Client</CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-4">
+                <CardContent className="grid gap-4 text-black">
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                             {/* FullName */}
@@ -200,7 +206,7 @@ const page = () => {
                         </form>
                     </Form>
                 </CardContent>
-            </Card>
+            </motion.div>
 
             <Toaster />
         </div>
