@@ -153,18 +153,18 @@ const page = () => {
     return (
         <div className='dash-back flex flex-col justify-center align-middle items-center'>
             <motion.div
-                className="flex flex-col place-items-center gap-6 py-10 px-20 my-[4%] bg-gradient-to-br from-cyan-400 via-white/30 to-blue-800 backdrop-blur-lg bg-opacity-20 shadow-xl border border-white/20 h-full rounded-tr-[48px] rounded-bl-[48px]"
+                className="flex flex-col place-items-center gap-6 py-5 px-10 my-[4%] bg-gradient-to-br from-cyan-400 via-white/30 to-blue-800 backdrop-blur-lg bg-opacity-20 shadow-xl border border-white/20 h-full rounded-tr-[48px] rounded-bl-[48px]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6 }}
             >
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-4 w-full">
                     <h1 className="text-2xl font-bold">Calendar</h1>
                     <Button asChild>
                         <Link href="/events/create">Create Events</Link>
                     </Button>
-
                 </div>
+
                 <div className="flex space-x-4 mb-4">
                     <Select value={view} onValueChange={setView}>
                         <SelectTrigger className="w-[180px]">

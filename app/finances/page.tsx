@@ -592,7 +592,7 @@ const page = () => {
     return (
         <div className='dash-back flex flex-col justify-center align-middle items-center'>
             <motion.div
-                className="flex flex-col place-items-center gap-6 py-10 px-20 my-[4%] bg-gradient-to-br from-cyan-400 via-white/30 to-blue-800 backdrop-blur-lg bg-opacity-20 shadow-xl border border-white/20 h-full rounded-tr-[48px] rounded-bl-[48px]"
+                className="flex flex-col place-items-center gap-6 py-5 px-10 my-[4%] bg-gradient-to-br from-cyan-400 via-white/30 to-blue-800 backdrop-blur-lg bg-opacity-20 shadow-xl border border-white/20 h-full rounded-tr-[48px] rounded-bl-[48px]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6 }}
