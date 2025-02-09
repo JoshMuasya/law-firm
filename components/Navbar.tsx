@@ -15,7 +15,7 @@ const Navbar = () => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full fixed top-0 left-0 w-full">
       {/* Top Menu Bar */}
       <motion.nav
         className="flex justify-center bg-gray-800 dark:bg-gray-200 py-3 shadow-md"

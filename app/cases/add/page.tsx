@@ -22,9 +22,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 
-import { Check, ChevronsUpDown, Plus, X } from "lucide-react"
-
-import { cn } from "@/lib/utils"
+import { Plus, X } from "lucide-react"
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
@@ -32,42 +30,14 @@ import { z } from "zod"
 
 import toast, { Toaster } from 'react-hot-toast';
 import { Textarea } from '@/components/ui/textarea'
-
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command"
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage'
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
-import { DocumentInterface, FormDataInterface } from '@/lib'
+import { addDoc, collection } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { motion } from "framer-motion";
 
 const errorCase = () => toast('Failed to Add Case!!! Try Again!!!');
 const added = () => toast('Case Added Successfully!!!');
-
-const practiceAreas = [
-    { value: "criminal", label: "Criminal" },
-    { value: "civil", label: "Civil" },
-    { value: "family", label: "Family Law" },
-    { value: "corporate", label: "Corporate Law" },
-];
-
-const caseStatuses = [
-    { value: "open", label: "Open" },
-    { value: "closed", label: "Closed" },
-    { value: "pending", label: "Pending" },
-];
 
 const formSchema = z.object({
     caseNumber: z.string().min(1, { message: 'Case number is required' }),

@@ -26,7 +26,7 @@ export default function Dashboard() {
                 {menuItems.map((item, index) => (
                     <Link key={index} href={item.path} className="">
                         <motion.div
-                            className="w-64 h-40 flex items-center justify-center bg-gray-700 rounded-lg shadow-lg cursor-pointer"
+                            className="w-64 h-40 flex items-center justify-center bg-blue-500 rounded-lg shadow-lg cursor-pointer text-2xl font-bold"
                             whileHover={{ scale: 1.05 }}
                             transition={{ duration: 0.3 }}
                         >

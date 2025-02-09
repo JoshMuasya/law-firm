@@ -1,5 +1,4 @@
 import Dashboard from "@/components/Dashboard";
-import Welcome from "@/components/ui/Welcome";
 
 export default function Home() {
   return (

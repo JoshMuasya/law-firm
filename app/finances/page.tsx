@@ -17,12 +17,9 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import {
-    DollarSign,
     Receipt,
     FileText,
     ClipboardList,
-    PlusCircle,
-    X,
     Printer,
     CreditCard,
     BarChart
@@ -33,13 +30,11 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogClose,
     DialogDescription,
 } from "@/components/ui/dialog";
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -54,13 +49,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { Search, Plus, Filter } from 'lucide-react';
-import { addDoc, collection, getDocs } from 'firebase/firestore';
+import { Search } from 'lucide-react';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Cases, Client, ClientFinances, Expense } from '@/lib';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import generatePDF from '@/lib/utils/generatePDF';
 import html2canvas from "html2canvas";
@@ -104,22 +97,14 @@ const page = () => {
     const [cases, setCases] = useState<Cases[]>([])
     const [clientPayments, setClientPayments] = useState<ClientFinances[]>([])
     const [selectedClientForHistory, setSelectedClientForHistory] = useState<ClientFinances | null>(null);
-    const [searchExpensesTerm, setSearchExpensesTerm] = useState('');
-    const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
-    const [selectedCase, setSelectedCase] = useState<Cases | null>(null);
-    const [selectedStatementPeriod, setSelectedStatementPeriod] = useState('month');
-    const [selectedStatement, setSelectedStatement] = useState('profitLoss');
     const [totalRevenue, setTotalRevenue] = useState(0);
     const [totalExpenses, setTotalExpenses] = useState(0);
-    const [profitLoss, setProfitLoss] = useState(0);
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [totalPaid, setTotalPaid] = useState(0)
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-    const [periodRevenue, setPeriodRevenue] = useState(0);
     const [periodExpenses, setPeriodExpenses] = useState(0);
     const [revenue, setRevenue] = useState(0);
-    const [tExpenses, setTExpenses] = useState(0);
     const [totExpenses, setTotExpenses] = useState<number>(0);
 
 
@@ -143,20 +128,6 @@ const page = () => {
         },
     });
 
-    const PaymentMethodIcon = ({ method }: { method: string }) => {
-        switch (method) {
-            case 'Cash':
-                return <span className="mr-1">💵</span>;
-            case 'Mobile Money':
-                return <span className="mr-1">📱</span>;
-            case 'Bank Transfer':
-                return <span className="mr-1">🏦</span>;
-            case 'Cheque':
-                return <span className="mr-1">📝</span>;
-            default:
-                return null;
-        }
-    };
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         const selectedClient = processedClients.find(
@@ -176,14 +147,6 @@ const page = () => {
         try {
             setIsSubmitting(true)
 
-            const docRef = await addDoc(collection(db, "ClientPayments"), {
-                fullname: values.fullname,
-                email: values.email,
-                phonenumber: values.phonenumber,
-                address: values.address,
-                amountPaid: values.amountPaid,
-                createdAt: new Date().toISOString()
-            });
 
             added();
         } catch (error) {
@@ -199,10 +162,6 @@ const page = () => {
         try {
             setIsSubmitting(true)
 
-            const docRef = await addDoc(collection(db, "Expenses"), {
-                ...values,
-                createdAt: new Date().toISOString()
-            });
 
             added();
         } catch (error) {
