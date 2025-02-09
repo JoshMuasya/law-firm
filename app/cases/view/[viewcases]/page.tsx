@@ -265,6 +265,7 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                 name: values.name,
                 date: values.date,
                 amount: values.amount,
+                id: ''
             };
 
             await updateDoc(docRef, {
