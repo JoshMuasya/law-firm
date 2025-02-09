@@ -28,6 +28,7 @@ import { Client } from '@/lib'
 import { useParams, useRouter } from 'next/navigation'
 import { collection, doc, DocumentSnapshot, getDoc, getDocs, Timestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import { motion } from 'framer-motion'
 
 const page = ({ params }: { params: { viewclient: string } }) => {
     const [client, setClient] = useState<Client | null>(null)
@@ -91,8 +92,13 @@ const page = ({ params }: { params: { viewclient: string } }) => {
     }
 
     return (
-        <div className='bg-muted flex flex-col justify-center items-center align-middle w-full h-full py-10'>
-            <Card className='w-11/12 md:w-3/4'>
+        <div className='dash-back flex flex-col justify-center align-middle items-center'>
+            <motion.div
+                className="flex flex-col place-items-center gap-6 py-10 px-10 my-[4%] bg-gradient-to-br from-cyan-400 via-white/30 to-blue-800 backdrop-blur-lg bg-opacity-20 shadow-xl border border-white/20 h-full rounded-tr-[48px] rounded-bl-[48px] w-[80%]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+            >
                 <CardHeader>
                     <CardTitle
                         className='text-center text-2xl md:text-3xl lg:text-4xl pb-3 font-bold flex flex-row justify-between align-middle items-center'
@@ -307,7 +313,7 @@ const page = ({ params }: { params: { viewclient: string } }) => {
                         </TabsContent>
                     </Tabs>
                 </CardContent>
-            </Card>
+            </motion.div>
         </div>
     )
 }

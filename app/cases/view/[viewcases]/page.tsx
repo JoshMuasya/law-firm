@@ -593,7 +593,7 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                             </Card>
                         </TabsContent>
 
-                        <TabsContent value="documents">
+                        {/* <TabsContent value="documents">
                             <Card className='py-10'>
                                 <CardHeader>
                                     <CardTitle className='text-2xl md:text-3xl lg:text-4xl pb-3 font-bold'>
@@ -626,7 +626,7 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                                         </TableBody>
                                     </Table>
 
-                                    {/* Add Docs */}
+                                    {/* Add Docs 
                                     <div className='py-5'>
                                         <h1 className='text-lg md:text-xl lg:text-2xl pb-3 font-bold'>
                                             Add Documents
@@ -634,7 +634,7 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                                         <Form {...documentForm}>
                                             <form onSubmit={documentForm.handleSubmit(onDocumentSubmit)} className="space-y-8">
 
-                                                {/* Description */}
+                                                {/* Description 
                                                 <FormField
                                                     control={documentForm.control}
                                                     name="desc"
@@ -648,7 +648,7 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                                                     )}
                                                 />
 
-                                                {/* File Upload */}
+                                                {/* File Upload 
                                                 <FormField
                                                     control={documentForm.control}
                                                     name="file"
@@ -668,7 +668,7 @@ const page = ({ params }: { params: { viewcases: string } }) => {
                                     </div>
                                 </CardContent>
                             </Card>
-                        </TabsContent>
+                        </TabsContent> */}
 
                         <TabsContent value="communication">
                             <Card className='py-10'>
