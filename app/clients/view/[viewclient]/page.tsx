@@ -131,7 +131,11 @@ const page = ({ params }: { params: { viewclient: string } }) => {
                                     {/* Date Joined */}
                                     <div>
                                         <h3 className='text-base md:text-lg'>
-                                            Client Since: {client.createdAt ? formatDate(client.createdAt) : 'Not available'}
+                                            Client Since: {client.createdAt
+                                                ? (typeof client.createdAt === 'string'
+                                                    ? client.createdAt
+                                                    : client.createdAt.toLocaleDateString())
+                                                : 'Not available'}
                                         </h3>
                                     </div>
                                 </div>
